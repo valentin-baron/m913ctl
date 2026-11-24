@@ -1,0 +1,308 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/valentin-baron/m913ctl/main/m913ctl.schema.json",
+  "title": "m913ctl config",
+  "description": "Redragon M913 settings. Only the sections present are written to the mouse.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "polling_rate": {
+      "description": "USB polling rate in Hz.",
+      "enum": [
+        125,
+        250,
+        500,
+        1000
+      ]
+    },
+    "dpi": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "levels": {
+          "description": "The 5 DPI levels the DPI buttons step through.",
+          "type": "array",
+          "minItems": 5,
+          "maxItems": 5,
+          "items": {
+            "$ref": "#/$defs/dpi"
+          }
+        },
+        "active": {
+          "description": "Which level is active, 1-5.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        }
+      }
+    },
+    "lighting": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "description": "Logo lighting effect. Only visible with the mouse's eco mode off.",
+          "enum": [
+            "off",
+            "steady",
+            "breathing",
+            "neon",
+            false
+          ]
+        },
+        "color": {
+          "description": "Steady and breathing colour.",
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        },
+        "brightness": {
+          "description": "Steady brightness.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 255
+        },
+        "speed": {
+          "description": "Breathing and neon speed.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        }
+      }
+    },
+    "macros": {
+      "description": "Up to 15 macros, name -> steps. Names up to 14 characters.",
+      "type": "object",
+      "maxProperties": 15,
+      "propertyNames": {
+        "maxLength": 14
+      },
+      "additionalProperties": {
+        "type": "array",
+        "maxItems": 140,
+        "items": {
+          "$ref": "#/$defs/step"
+        }
+      }
+    },
+    "buttons": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "side_1": {
+          "$ref": "#/$defs/action"
+        },
+        "side_2": {
+          "$ref": "#/$defs/action"
+        },
+        "side_3": {
+          "$ref": "#/$defs/action"
+        },
+        "side_4": {
+          "$ref": "#/$defs/action"
+        },
+        "side_5": {
+          "$ref": "#/$defs/action"
+        },
+        "side_6": {
+          "$ref": "#/$defs/action"
+        },
+        "side_7": {
+          "$ref": "#/$defs/action"
+        },
+        "side_8": {
+          "$ref": "#/$defs/action"
+        },
+        "side_9": {
+          "$ref": "#/$defs/action"
+        },
+        "side_10": {
+          "$ref": "#/$defs/action"
+        },
+        "side_11": {
+          "$ref": "#/$defs/action"
+        },
+        "side_12": {
+          "$ref": "#/$defs/action"
+        },
+        "left": {
+          "$ref": "#/$defs/action"
+        },
+        "right": {
+          "$ref": "#/$defs/action"
+        },
+        "middle": {
+          "$ref": "#/$defs/action"
+        },
+        "fire": {
+          "$ref": "#/$defs/action",
+          "description": "The small button beside the left click."
+        }
+      }
+    }
+  },
+  "$defs": {
+    "dpi": {
+      "type": "integer",
+      "minimum": 100,
+      "maximum": 16000,
+      "multipleOf": 100
+    },
+    "key": {
+      "description": "A key name.",
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^([a-z0-9]|f([1-9]|1[0-9]|2[0-4])|kp[0-9]|kp[-+*/]|kpenter|enter|esc|backspace|tab|space|minus|equal|capslock|print|scrolllock|pause|insert|home|pageup|delete|end|pagedown|arrow-(up|down|left|right))$"
+        },
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9
+        }
+      ]
+    },
+    "combo": {
+      "description": "A key with optional modifiers, e.g. ctrl+shift+a.",
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^((ctrl|shift|alt|win)\\+)*([a-z0-9]|f([1-9]|1[0-9]|2[0-4])|kp[0-9]|kp[-+*/]|kpenter|enter|esc|backspace|tab|space|minus|equal|capslock|print|scrolllock|pause|insert|home|pageup|delete|end|pagedown|arrow-(up|down|left|right))$"
+        },
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9
+        }
+      ]
+    },
+    "step": {
+      "description": "down X / up X (a key, ctrl/shift/alt/win, or left/right/middle/back/forward), or wait MS: the delay after the previous step.",
+      "type": "string",
+      "pattern": "^((down|up) ([a-z0-9]|f([1-9]|1[0-9]|2[0-4])|kp[0-9]|kp[-+*/]|kpenter|enter|esc|backspace|tab|space|minus|equal|capslock|print|scrolllock|pause|insert|home|pageup|delete|end|pagedown|arrow-(up|down|left|right)|ctrl|shift|alt|win|left|right|middle|back|forward)|wait [0-9]+)$"
+    },
+    "action": {
+      "oneOf": [
+        {
+          "description": "A fixed action.",
+          "enum": [
+            "left",
+            "right",
+            "middle",
+            "back",
+            "forward",
+            "disable",
+            "dpi+",
+            "dpi-",
+            "dpi-loop",
+            "three-click",
+            "polling-rate-switch",
+            "rgb-toggle"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "key"
+          ],
+          "properties": {
+            "key": {
+              "$ref": "#/$defs/combo"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "media"
+          ],
+          "properties": {
+            "media": {
+              "enum": [
+                "media-player",
+                "play-pause",
+                "next",
+                "previous",
+                "stop",
+                "mute",
+                "volume-up",
+                "volume-down",
+                "email",
+                "calculator",
+                "my-computer",
+                "www-home",
+                "www-search",
+                "www-forward",
+                "www-back",
+                "www-stop",
+                "www-refresh",
+                "www-favorites"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "macro"
+          ],
+          "properties": {
+            "macro": {
+              "description": "Name of a macro under `macros`.",
+              "type": "string"
+            },
+            "repeat": {
+              "description": "1-253 times, while-held, or until-key (until any key is pressed).",
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 253
+                },
+                {
+                  "enum": [
+                    "while-held",
+                    "until-key"
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "fire"
+          ],
+          "properties": {
+            "fire": {
+              "description": "Repeated left clicks.",
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "speed",
+                "times"
+              ],
+              "properties": {
+                "speed": {
+                  "description": "Raw stored value, lower is faster.",
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 255
+                },
+                "times": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 255
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

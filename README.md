@@ -39,6 +39,15 @@ sudo udevadm control --reload
 
 ## Config
 
+YAML or JSON (any JSON file is valid YAML too). For completion and error checking in editors with
+yaml-language-server (VS Code, Neovim, …), start the file with:
+
+```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/valentin-baron/m913ctl/main/m913ctl.schema.yaml
+```
+
+The same schema is in `m913ctl.schema.json` for JSON editors.
+
 ```yaml
 polling_rate: 1000            # 125 | 250 | 500 | 1000
 dpi:

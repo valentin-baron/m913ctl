@@ -314,3 +314,28 @@ mod tests {
         }
     }
 }
+
+#[cfg(test)]
+mod schema_tests {
+    use serde_yaml_ng::Value;
+
+    /// The JSON schema is a copy of the YAML one; only its $id differs.
+    #[test]
+    fn schemas_agree() {
+        let load = |s: &str| -> Value { serde_yaml_ng::from_str(s).unwrap() };
+        let mut yaml = load(include_str!("../m913ctl.schema.yaml"));
+        let mut json = load(include_str!("../m913ctl.schema.json"));
+        yaml.as_mapping_mut().unwrap().remove("$id");
+        json.as_mapping_mut().unwrap().remove("$id");
+        assert_eq!(yaml, json);
+    }
+
+    /// JSON configs go through the same parser.
+    #[test]
+    fn json_and_yaml_examples_agree() {
+        let yaml = super::plan(include_str!("../examples/full-test.yaml")).unwrap();
+        let json = super::plan(include_str!("../examples/full-test.json")).unwrap();
+        let bytes = |w: &[super::Write]| w.iter().map(|w| (w.addr, w.data.clone())).collect::<Vec<_>>();
+        assert_eq!(bytes(&yaml), bytes(&json));
+    }
+}
