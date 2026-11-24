@@ -142,8 +142,9 @@ fn read_macro(mouse: &mut Mouse, index: usize) -> Result<(String, Vec<String>), 
 
 /// Quote anything YAML would read as something other than the plain string.
 fn quote(s: &str) -> String {
-    let plain = !s.is_empty()
-        && s.chars().all(|c| c.is_ascii_alphanumeric() || " -_".contains(c))
+    // `+ * /` are plain inside a scalar (kp+, ctrl+a); only the first character is special.
+    let plain = s.starts_with(|c: char| c.is_ascii_alphanumeric())
+        && s.chars().all(|c| c.is_ascii_alphanumeric() || " -_+*/".contains(c))
         && s.parse::<f64>().is_err()
         && !["y", "n", "yes", "no", "on", "off", "true", "false", "null", "~"].contains(&s.to_lowercase().as_str());
     if plain { s.to_string() } else { format!("\"{}\"", s.replace('\\', "\\\\").replace('"', "\\\"")) }
