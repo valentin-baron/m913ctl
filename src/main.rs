@@ -74,6 +74,10 @@ fn action_value(action: Action) -> Value {
         Action::Key { combo } => map(&[("key", combo.into())]),
         Action::Media { key } => map(&[("media", name(key).into())]),
         Action::Macro { .. } => unreachable!("macros are set by index in set()"),
+        Action::Experimental(cli::Experimental::KeySequence { keys }) => map(&[(
+            "experimental",
+            map(&[("key_sequence", keys.into_iter().map(Value::from).collect())]),
+        )]),
         Action::RapidFire { speed, times } => {
             map(&[("fire", map(&[("speed", speed.into()), ("times", times.into())]))])
         }

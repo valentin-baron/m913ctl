@@ -60,63 +60,24 @@ sudo udevadm control --reload
 
 ## Config
 
-YAML or JSON (any JSON file is valid YAML too). For completion and error checking in editors with
-yaml-language-server (VS Code, Neovim, …), start the file with:
+A config file sets polling rate, DPI levels, lighting, macros and what each button does. YAML or
+JSON; only what's in the file is written.
 
 ```yaml
 # yaml-language-server: $schema=https://raw.githubusercontent.com/valentin-baron/m913ctl/main/m913ctl.schema.yaml
-```
-
-The same schema is in `m913ctl.schema.json` for JSON editors.
-
-```yaml
-polling_rate: 1000            # 125 | 250 | 500 | 1000
-dpi:
-  levels: [800, 1600, 3200, 6400, 12000]   # exactly 5, 100-16000 in steps of 100
-  active: 2                   # 1-5
-lighting:
-  mode: steady                # off | steady | breathing | neon
-  color: "#ff8000"            # steady, breathing
-  brightness: 128             # 1-255, steady
-  speed: 3                    # 1-5, breathing and neon
-macros:                       # up to 15; names up to 14 characters
-  hello: [down shift, down h, up h, up shift, down e, up e, down l, up l, down l, up l, down o, up o]
-  clicker: [down left, wait 40, up left, wait 300]
+dpi: {levels: [800, 1600, 3200, 6400, 12000], active: 2}
+lighting: {mode: steady, color: "#ff8000"}
+macros:
+  hello: [down shift, down h, up h, up shift, down i, up i]
 buttons:
-  1: {key: a}
-  2: {key: ctrl+shift+t}
   3: back
   4: {media: play-pause}
-  5: {macro: hello, repeat: 1}
-  6: {macro: clicker, repeat: while-held}
-  12: dpi-loop
+  5: {macro: hello}
   fire: {key: f13}
 ```
 
-**Buttons**: `1` … `12` are the thumb grid, numbered as in Redragon's software; `left`,
-`right`, `middle`; `fire` is the small button beside the left click. The two DPI buttons behind
-the wheel are fixed in the firmware and can't be remapped.
-
-**Actions**
-
-| action | |
-|---|---|
-| `left` `right` `middle` `back` `forward` | mouse buttons |
-| `disable` | does nothing |
-| `dpi+` `dpi-` `dpi-loop` | DPI up, down, cycle |
-| `three-click` | triple left click |
-| `polling-rate-switch` `rgb-toggle` | cycle the polling rate, lighting on/off |
-| `{key: ctrl+shift+a}` | a key, optionally with `ctrl` `shift` `alt` `win` |
-| `{media: volume-up}` | `play-pause` `next` `previous` `stop` `mute` `volume-up` `volume-down` `media-player` `email` `calculator` `my-computer` `www-home` `www-search` `www-back` `www-forward` `www-stop` `www-refresh` `www-favorites` |
-| `{macro: NAME, repeat: N}` | a macro; `repeat` is 1-253, `while-held`, or `until-key` (until any key is pressed) |
-| `{fire: {speed: N, times: N}}` | repeated left clicks; `speed` is the raw stored value, lower is faster |
-
-**Keys**: `a`-`z`, `0`-`9`, `f1`-`f24`, `kp0`-`kp9`, `kp+` `kp-` `kp*` `kp/` `kpenter`, `enter`
-`esc` `backspace` `tab` `space` `minus` `equal` `capslock` `print` `scrolllock` `pause` `insert`
-`home` `pageup` `delete` `end` `pagedown` `arrow-up` `arrow-down` `arrow-left` `arrow-right`.
-
-**Macro steps**: `down X`, `up X` and `wait MS` (the delay after the step before it; 3 ms when
-there is none). `X` is a key, a modifier, or a mouse button.
+**[CONFIG.md](CONFIG.md) documents every field, action, key name and limit.** The schema
+(`m913ctl.schema.yaml`, also as `.json`) gives editors completion and error checking.
 
 ## Good to know
 
@@ -127,6 +88,8 @@ there is none). `X` is a key, a modifier, or a mouse button.
 - **Profiles**: the switch under the mouse selects one of two profiles; m913ctl reads and writes
   whichever is active.
 - **Not supported**: the DPI-indicator colours, which Redragon's software never changes either.
+- **Every write is read back and checked.** The mouse acknowledges some writes it then ignores
+  (too many keys on one button), so m913ctl doesn't trust the acknowledgement alone.
 
 ## How it works
 

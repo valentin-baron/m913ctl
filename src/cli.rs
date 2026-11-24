@@ -413,6 +413,9 @@ pub enum Action {
     Key { combo: String },
     /// A media key
     Media { key: MediaKey },
+    /// Not offered by Redragon's software
+    #[command(subcommand)]
+    Experimental(Experimental),
     /// A macro already stored in the mouse (see `get macros`; macros are written with `apply`)
     Macro {
         /// Without one, the macros in the mouse are listed
@@ -426,6 +429,19 @@ pub enum Action {
         /// Raw stored value, lower is faster
         speed: u8,
         times: u8,
+    },
+}
+
+#[derive(Subcommand)]
+pub enum Experimental {
+    /// Several keys or combos from one press, e.g. `h i` or `ctrl+c ctrl+v`. The mouse plays
+    /// everything up to the first key release on press and the rest on release, so `h i` holds
+    /// h while the button is held (key repeat) and types i when it comes up. Up to 10 presses
+    /// and releases in total, e.g. 5 plain keys
+    #[command(after_help = KEYS_HELP)]
+    KeySequence {
+        #[arg(required = true)]
+        keys: Vec<String>,
     },
 }
 

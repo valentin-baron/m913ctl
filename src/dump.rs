@@ -108,25 +108,42 @@ pub fn dpi_levels(mouse: &mut Mouse) -> Result<Vec<u16>, String> {
 
 fn decode_sequence(slot: &[u8]) -> String {
     let n = (slot[0] as usize).min((SLOT_SIZE - 2) / 3);
-    let downs: Vec<(u8, u16)> = (0..n)
+    let events: Vec<(u8, u16)> = (0..n)
         .map(|i| (slot[1 + 3 * i], slot[2 + 3 * i] as u16 | (slot[3 + 3 * i] as u16) << 8))
-        .filter(|(k, _)| k & 0x80 != 0)
         .collect();
-    if let [(EV_MEDIA, u)] = downs[..] {
+    if let [(EV_MEDIA, u), _] = events[..] {
         return match reverse(&MEDIA, u) {
             Some(m) => format!("{{media: {m}}}"),
             None => format!("{{media: unknown 0x{u:04x}}}"),
         };
     }
-    let parts: Vec<String> = downs
-        .iter()
-        .map(|(k, c)| match *k {
-            EV_MODIFIER => reverse(&MODIFIERS, *c).map(str::to_string),
-            EV_KEY => key_name(*c),
-            _ => None,
-        }.unwrap_or_else(|| format!("0x{c:x}")))
-        .collect();
-    format!("{{key: {}}}", quote(&parts.join("+")))
+    // Split into combos: one ends whenever nothing is held any more.
+    let mut combos: Vec<Vec<String>> = Vec::new();
+    let (mut held, mut cur) = (0i32, Vec::new());
+    for (k, c) in &events {
+        if k & 0x80 != 0 {
+            held += 1;
+            cur.push(match *k {
+                EV_MODIFIER => reverse(&MODIFIERS, *c).map(str::to_string),
+                EV_KEY => key_name(*c),
+                _ => None,
+            }.unwrap_or_else(|| format!("0x{c:x}")));
+        } else {
+            held -= 1;
+            if held <= 0 && !cur.is_empty() {
+                combos.push(std::mem::take(&mut cur));
+                held = 0;
+            }
+        }
+    }
+    if !cur.is_empty() {
+        combos.push(cur);
+    }
+    let combos: Vec<String> = combos.iter().map(|c| quote(&c.join("+"))).collect();
+    match &combos[..] {
+        [one] => format!("{{key: {one}}}"),
+        many => format!("{{experimental: {{key_sequence: [{}]}}}}", many.join(", ")),
+    }
 }
 
 pub fn read_macro(mouse: &mut Mouse, index: usize) -> Result<(String, Vec<String>), String> {

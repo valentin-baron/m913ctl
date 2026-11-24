@@ -21,7 +21,7 @@ pub fn plan(text: &str) -> Result<Vec<Write>, String> {
     for key in root.keys() {
         let k = key.as_str().unwrap_or("");
         if !["polling_rate", "dpi", "lighting", "macros", "buttons"].contains(&k) {
-            return Err(format!("unknown section {key:?} (polling_rate, dpi, lighting, macros, buttons)"));
+            return Err(format!("unknown section {} (polling_rate, dpi, lighting, macros, buttons)", show(key)));
         }
     }
 
@@ -132,6 +132,20 @@ fn encode_button(action: &Value, macros: &[String]) -> Result<(Vec<u8>, Option<V
     let map = action.as_mapping().ok_or(format!("bad action {}", show(action)))?;
     let events: Vec<(u8, u16)> = if let Some(k) = map.get("key") {
         parse_combo(&scalar(k).ok_or("key must be a string")?)?
+    } else if let Some(x) = map.get("experimental") {
+        // Not offered by the vendor tool. The mouse plays the events up to the first release when
+        // the button goes down and the rest when it comes up, 3 polls apart: "h, i" holds h while
+        // the button is held and types i on release.
+        let seq = x.get("key_sequence").and_then(Value::as_sequence)
+            .ok_or("experimental takes key_sequence: [key or combo, ...]")?;
+        let mut events = Vec::new();
+        for k in seq {
+            events.extend(parse_combo(&scalar(k).ok_or("key_sequence entries must be keys")?)?);
+        }
+        if events.is_empty() {
+            return Err("key_sequence is empty".into());
+        }
+        events
     } else if let Some(m) = map.get("media") {
         let m = m.as_str().ok_or("media must be a string")?;
         let u = lookup(&MEDIA, m).ok_or(format!("unknown media key {m:?}"))?;
@@ -161,8 +175,12 @@ fn encode_button(action: &Value, macros: &[String]) -> Result<(Vec<u8>, Option<V
     for (kind, code) in &events {
         body.extend([*kind, *code as u8, (*code >> 8) as u8]);
     }
-    if body.len() + 1 > SLOT_SIZE {
-        return Err("too many keys for one button".into());
+    if events.len() > SLOT_EVENTS {
+        return Err(format!(
+            "too many keys for one button: {} presses and releases, the mouse takes {SLOT_EVENTS} \
+             (3 plain keys, or a key with 2 modifiers); use a macro for more",
+            events.len()
+        ));
     }
     Ok((closed(&[T_SEQUENCE, 0, 0]), Some(closed(&body))))
 }
@@ -257,8 +275,19 @@ fn scalar(v: &Value) -> Option<String> {
     }
 }
 
+/// One-line YAML (flow style), as the config file would have it.
 fn show(v: &Value) -> String {
-    serde_yaml_ng::to_string(v).unwrap_or_default().trim().replace('\n', ", ")
+    match v {
+        Value::Mapping(m) => {
+            let items: Vec<String> = m.iter().map(|(k, v)| format!("{}: {}", show(k), show(v))).collect();
+            format!("{{{}}}", items.join(", "))
+        }
+        Value::Sequence(s) => format!("[{}]", s.iter().map(show).collect::<Vec<_>>().join(", ")),
+        Value::String(s) => s.clone(),
+        Value::Number(n) => n.to_string(),
+        Value::Bool(b) => b.to_string(),
+        _ => serde_yaml_ng::to_string(v).unwrap_or_default().trim().to_string(),
+    }
 }
 
 fn show_list(v: &[Value]) -> String {
@@ -298,6 +327,15 @@ mod tests {
             0x06, 0x80, 0x01, 0x00, 0x80, 0x02, 0x00, 0x81, 0x04, 0x00,
             0x40, 0x01, 0x00, 0x40, 0x02, 0x00, 0x41, 0x04, 0x00, 0xff,
         ]);
+    }
+
+    /// The two-key sequence tested on the mouse.
+    #[test]
+    fn key_sequence_matches_hardware_test() {
+        let v: Value = serde_yaml_ng::from_str("{experimental: {key_sequence: [h, i]}}").unwrap();
+        let (rec, slot) = encode_button(&v, &[]).unwrap();
+        assert_eq!(rec, [0x05, 0x00, 0x00, 0x50]);
+        assert_eq!(slot.unwrap(), [0x04, 0x81, 0x0b, 0x00, 0x41, 0x0b, 0x00, 0x81, 0x0c, 0x00, 0x41, 0x0c, 0x00, 0x9f]);
     }
 
     #[test]

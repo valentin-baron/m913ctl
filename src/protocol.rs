@@ -42,6 +42,9 @@ pub const ADDR_SPEED: u16 = 0x5c;
 pub const ADDR_RECORDS: u16 = 0x60;
 pub const ADDR_SLOTS: u16 = 0x100;
 pub const SLOT_SIZE: usize = 0x20;
+/// Presses and releases one button can play. The slot has room for 10, but the firmware ignores
+/// a write of 7 or more (while still echoing it).
+pub const SLOT_EVENTS: usize = 6;
 pub const ADDR_MACROS: u16 = 0x300;
 pub const MACRO_SIZE: usize = 0x180;
 pub const MACRO_COUNT: usize = 15;

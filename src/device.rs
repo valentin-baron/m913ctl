@@ -86,9 +86,18 @@ impl Mouse {
         Ok(out)
     }
 
+    /// Writes, then reads back: the mouse echoes writes it silently ignores (an over-long key
+    /// sequence, for one), so the echo alone proves nothing.
     pub fn write(&mut self, addr: u16, data: &[u8]) -> Result<(), String> {
         for (i, chunk) in data.chunks(CHUNK).enumerate() {
             self.request(0x07, addr + (i * CHUNK) as u16, chunk, chunk.len() as u8)?;
+        }
+        let stored = self.read(addr, data.len())?;
+        if stored != data {
+            return Err(format!(
+                "the mouse did not store the write at 0x{addr:04x} (sent {}, holds {})",
+                hex(data), hex(&stored)
+            ));
         }
         Ok(())
     }

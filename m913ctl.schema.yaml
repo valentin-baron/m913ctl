@@ -147,6 +147,22 @@ $defs:
               - enum: [while-held, until-key]
       - type: object
         additionalProperties: false
+        required: [experimental]
+        properties:
+          experimental:
+            description: Not offered by Redragon's software; see CONFIG.md.
+            type: object
+            additionalProperties: false
+            required: [key_sequence]
+            properties:
+              key_sequence:
+                description: "Keys or combos from one press: everything up to the first release plays on press, the rest on release. 6 presses and releases in total."
+                type: array
+                minItems: 1
+                maxItems: 3
+                items: {$ref: "#/$defs/combo"}
+      - type: object
+        additionalProperties: false
         required: [fire]
         properties:
           fire:
