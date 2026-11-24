@@ -1,0 +1,2 @@
+# Lets the logged-in user configure the Redragon M913 (receiver fa07, cable fa08).
+KERNEL=="hidraw*", ATTRS{idVendor}=="25a7", ATTRS{idProduct}=="fa0[78]", TAG+="uaccess"
