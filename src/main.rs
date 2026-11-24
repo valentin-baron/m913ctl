@@ -173,6 +173,18 @@ fn get(mouse: &mut Mouse, what: Option<Get>) -> Result<(), String> {
             }
             return Ok(());
         }
+        Some(Get::Battery) => {
+            let online = mouse.query(protocol::QUERY_ONLINE)?;
+            if online.first() != Some(&1) {
+                return Err("the mouse isn't connected to the receiver (asleep? move it)".into());
+            }
+            let level = mouse.query(protocol::QUERY_BATTERY)?;
+            match level.first() {
+                Some(&tenths) if tenths <= 10 => println!("{}%", tenths as u32 * 10),
+                _ => return Err(format!("unexpected battery answer {}", device::hex(&level))),
+            }
+            return Ok(());
+        }
         Some(Get::Profile) => {
             println!("{}", dump::profile(mouse)?);
             return Ok(());
@@ -213,7 +225,7 @@ fn get(mouse: &mut Mouse, what: Option<Get>) -> Result<(), String> {
         Get::Dpi { .. } => ("dpi", None),
         Get::Lighting { .. } => ("lighting", None),
         Get::Buttons => ("buttons", None),
-        Get::Macros | Get::Profile => unreachable!("handled above"),
+        Get::Macros | Get::Profile | Get::Battery => unreachable!("handled above"),
         button => ("buttons", button.button()),
     };
     let lines: Vec<&str> = full.lines().collect();

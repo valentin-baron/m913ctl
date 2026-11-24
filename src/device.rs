@@ -77,6 +77,42 @@ impl Mouse {
         }
     }
 
+    /// A status query outside the memory map (online, battery): `08 cmd`, answered by
+    /// `09 cmd 00 00 00 len <data>`. Byte 2 of the answer is 0 on success.
+    pub fn query(&mut self, cmd: u8) -> Result<Vec<u8>, String> {
+        let mut last = String::new();
+        for _ in 0..3 {
+            match self.try_query(cmd) {
+                Ok(v) => return Ok(v),
+                Err(e) => last = e,
+            }
+        }
+        Err(last)
+    }
+
+    fn try_query(&mut self, cmd: u8) -> Result<Vec<u8>, String> {
+        let mut msg = vec![0x08, cmd];
+        msg.resize(16, 0);
+        let msg = closed(&msg);
+        self.request.send_feature_report(&msg).map_err(|e| format!("sending {}: {e}", hex(&msg)))?;
+
+        let answer = self.answer.as_ref().unwrap_or(&self.request);
+        let mut buf = [0u8; 64];
+        loop {
+            let n = answer.read_timeout(&mut buf, 500).map_err(|e| e.to_string())?;
+            if n == 0 {
+                return Err(format!("no answer to {} (mouse asleep? move it and retry)", hex(&msg)));
+            }
+            if n >= 6 && buf[0] == 0x09 && buf[1] == cmd {
+                if buf[2] != 0 {
+                    return Err(format!("the mouse refused {}: {}", hex(&msg), hex(&buf[..n])));
+                }
+                let len = (buf[5] as usize).min(n - 6);
+                return Ok(buf[6..6 + len].to_vec());
+            }
+        }
+    }
+
     pub fn read(&mut self, addr: u16, length: usize) -> Result<Vec<u8>, String> {
         let mut out = Vec::with_capacity(length);
         while out.len() < length {

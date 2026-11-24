@@ -13,6 +13,7 @@ m913ctl get dpi                     # one section: polling-rate, dpi, lighting, 
 m913ctl get dpi levels              # one value: dpi levels|active|1-5, lighting mode|color|brightness|speed
 m913ctl get fire                    # one button: 1-12, left, right, middle, fire
 m913ctl get macros                  # the macros stored in the mouse
+m913ctl get battery                 # in steps of 10%; also says when the mouse is asleep
 
 m913ctl set fire key f13
 m913ctl set 3 media play-pause
@@ -44,12 +45,21 @@ can point any button at them by name.
 
 ## Install
 
+**Arch Linux**: from the [AUR](https://aur.archlinux.org/packages/m913ctl), which also installs
+the udev rule and shell completions:
+
+```
+paru -S m913ctl
+```
+
+**Elsewhere**, or for the latest commit:
+
 ```
 cargo install --git https://github.com/valentin-baron/m913ctl
 ```
 
-**Linux** needs permission to talk to the mouse. Install the udev rule, then replug the receiver
-or cable:
+**Linux** (outside the AUR package) needs permission to talk to the mouse. Install the udev rule,
+then replug the receiver or cable:
 
 ```
 sudo cp 70-m913.rules /etc/udev/rules.d/

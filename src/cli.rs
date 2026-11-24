@@ -64,6 +64,8 @@ pub enum Get {
     Lighting { part: Option<LightPart> },
     /// Which profile is active, 1 or 2 (the button under the mouse switches)
     Profile,
+    /// Battery level in percent (in steps of 10, as the mouse reports it)
+    Battery,
     /// Every button's action
     Buttons,
     /// The macros stored in the mouse, which buttons can be set to (`set <BUTTON> macro <NAME>`)
