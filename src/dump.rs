@@ -24,7 +24,7 @@ pub fn dump(mouse: &mut Mouse) -> Result<String, String> {
 
     let mode = LIGHT_MODES.get(mem[ADDR_LIGHT_MODE as usize] as usize).copied().unwrap_or("off");
     let rgb = &mem[ADDR_COLOR as usize..ADDR_COLOR as usize + 3];
-    let mut light = vec![format!("mode: \"{mode}\"")];
+    let mut light = vec![format!("mode: {mode}")];
     if matches!(mode, "steady" | "breathing") {
         light.push(format!("color: \"#{:02x}{:02x}{:02x}\"", rgb[0], rgb[1], rgb[2]));
     }
@@ -140,12 +140,12 @@ fn read_macro(mouse: &mut Mouse, index: usize) -> Result<(String, Vec<String>), 
     Ok((name, steps))
 }
 
-/// Quote anything YAML would read as something other than the plain string.
+/// Quote only what a YAML 1.2 parser would read as something else. Numbers stay plain: m913ctl
+/// reads `key: 1` as the key "1".
 fn quote(s: &str) -> String {
     // `+ * /` are plain inside a scalar (kp+, ctrl+a); only the first character is special.
     let plain = s.starts_with(|c: char| c.is_ascii_alphanumeric())
         && s.chars().all(|c| c.is_ascii_alphanumeric() || " -_+*/".contains(c))
-        && s.parse::<f64>().is_err()
-        && !["y", "n", "yes", "no", "on", "off", "true", "false", "null", "~"].contains(&s.to_lowercase().as_str());
+        && !["true", "false", "null"].contains(&s.to_lowercase().as_str());
     if plain { s.to_string() } else { format!("\"{}\"", s.replace('\\', "\\\\").replace('"', "\\\"")) }
 }
