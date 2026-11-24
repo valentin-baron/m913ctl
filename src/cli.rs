@@ -3,7 +3,7 @@
 
 use std::path::PathBuf;
 
-use clap::{Args, Parser, Subcommand, ValueEnum};
+use clap::{Parser, Subcommand, ValueEnum};
 use clap_complete::Shell;
 
 const KEYS_HELP: &str = "\
@@ -29,7 +29,7 @@ pub enum Command {
         #[command(subcommand)]
         what: Option<Get>,
     },
-    /// Change one setting: polling rate, DPI, lighting, or a button (side_1 ... fire)
+    /// Change one setting: polling rate, DPI, lighting, or a button (1-12, left, right, middle, fire)
     Set {
         #[command(subcommand)]
         what: Set,
@@ -58,134 +58,210 @@ pub enum Command {
 pub enum Get {
     /// USB polling rate in Hz
     PollingRate,
-    /// DPI levels and which one is active
-    Dpi,
-    /// Logo lighting
-    Lighting,
+    /// DPI levels and which one is active, or one part of that
+    Dpi { part: Option<DpiPart> },
+    /// Logo lighting, or one part of it
+    Lighting { part: Option<LightPart> },
     /// Every button's action
     Buttons,
-    /// One button's action
-    Button { button: Button },
+    /// Thumb grid button 1
+    #[command(name = "1")]
+    Side1,
+    /// Thumb grid button 2
+    #[command(name = "2")]
+    Side2,
+    /// Thumb grid button 3
+    #[command(name = "3")]
+    Side3,
+    /// Thumb grid button 4
+    #[command(name = "4")]
+    Side4,
+    /// Thumb grid button 5
+    #[command(name = "5")]
+    Side5,
+    /// Thumb grid button 6
+    #[command(name = "6")]
+    Side6,
+    /// Thumb grid button 7
+    #[command(name = "7")]
+    Side7,
+    /// Thumb grid button 8
+    #[command(name = "8")]
+    Side8,
+    /// Thumb grid button 9
+    #[command(name = "9")]
+    Side9,
+    /// Thumb grid button 10
+    #[command(name = "10")]
+    Side10,
+    /// Thumb grid button 11
+    #[command(name = "11")]
+    Side11,
+    /// Thumb grid button 12
+    #[command(name = "12")]
+    Side12,
+    /// The left button
+    #[command(name = "left")]
+    Left,
+    /// The right button
+    #[command(name = "right")]
+    Right,
+    /// The wheel click
+    #[command(name = "middle")]
+    Middle,
+    /// The small button beside the left click
+    #[command(name = "fire")]
+    Fire,
+}
+
+impl Get {
+    /// The config name of a button variant.
+    pub fn button(&self) -> Option<&'static str> {
+        Some(match self {
+            Get::Side1 => "1",
+            Get::Side2 => "2",
+            Get::Side3 => "3",
+            Get::Side4 => "4",
+            Get::Side5 => "5",
+            Get::Side6 => "6",
+            Get::Side7 => "7",
+            Get::Side8 => "8",
+            Get::Side9 => "9",
+            Get::Side10 => "10",
+            Get::Side11 => "11",
+            Get::Side12 => "12",
+            Get::Left => "left",
+            Get::Right => "right",
+            Get::Middle => "middle",
+            Get::Fire => "fire",
+            _ => return None,
+        })
+    }
+}
+
+#[derive(ValueEnum, Clone, Copy)]
+pub enum DpiPart {
+    /// All five levels
+    Levels,
+    /// Which level is active
+    Active,
+    #[value(name = "1")] L1,
+    #[value(name = "2")] L2,
+    #[value(name = "3")] L3,
+    #[value(name = "4")] L4,
+    #[value(name = "5")] L5,
+}
+
+#[derive(ValueEnum, Clone, Copy)]
+pub enum LightPart {
+    Mode,
+    Color,
+    Brightness,
+    Speed,
 }
 
 #[derive(Subcommand)]
 pub enum Set {
     /// USB polling rate in Hz
     PollingRate { rate: PollingRate },
-    /// One DPI level
-    Dpi {
-        /// Which level, 1-5
-        #[arg(value_parser = clap::value_parser!(u8).range(1..=5))]
-        level: u8,
-        /// 100-16000 in steps of 100
-        #[arg(value_parser = parse_dpi)]
-        dpi: u16,
-    },
-    /// All five DPI levels at once
-    DpiLevels {
-        /// Five values, 100-16000 in steps of 100
-        #[arg(num_args = 5, value_parser = parse_dpi, required = true)]
-        dpi: Vec<u16>,
-    },
-    /// Which DPI level is active
-    ActiveDpi {
-        #[arg(value_parser = clap::value_parser!(u8).range(1..=5))]
-        level: u8,
-    },
-    /// Logo lighting; give any of the options. Only visible with the mouse's eco mode off
-    Lighting(Lighting),
+    /// DPI levels and which one is active
+    #[command(subcommand)]
+    Dpi(SetDpi),
+    /// Logo lighting. Only visible with the mouse's eco mode off
+    #[command(subcommand)]
+    Lighting(SetLighting),
     /// Thumb grid button 1
-    #[command(name = "side_1", next_help_heading = "Buttons")]
+    #[command(name = "1")]
     Side1 {
         #[command(subcommand)]
         action: Action,
     },
     /// Thumb grid button 2
-    #[command(name = "side_2", next_help_heading = "Buttons")]
+    #[command(name = "2")]
     Side2 {
         #[command(subcommand)]
         action: Action,
     },
     /// Thumb grid button 3
-    #[command(name = "side_3", next_help_heading = "Buttons")]
+    #[command(name = "3")]
     Side3 {
         #[command(subcommand)]
         action: Action,
     },
     /// Thumb grid button 4
-    #[command(name = "side_4", next_help_heading = "Buttons")]
+    #[command(name = "4")]
     Side4 {
         #[command(subcommand)]
         action: Action,
     },
     /// Thumb grid button 5
-    #[command(name = "side_5", next_help_heading = "Buttons")]
+    #[command(name = "5")]
     Side5 {
         #[command(subcommand)]
         action: Action,
     },
     /// Thumb grid button 6
-    #[command(name = "side_6", next_help_heading = "Buttons")]
+    #[command(name = "6")]
     Side6 {
         #[command(subcommand)]
         action: Action,
     },
     /// Thumb grid button 7
-    #[command(name = "side_7", next_help_heading = "Buttons")]
+    #[command(name = "7")]
     Side7 {
         #[command(subcommand)]
         action: Action,
     },
     /// Thumb grid button 8
-    #[command(name = "side_8", next_help_heading = "Buttons")]
+    #[command(name = "8")]
     Side8 {
         #[command(subcommand)]
         action: Action,
     },
     /// Thumb grid button 9
-    #[command(name = "side_9", next_help_heading = "Buttons")]
+    #[command(name = "9")]
     Side9 {
         #[command(subcommand)]
         action: Action,
     },
     /// Thumb grid button 10
-    #[command(name = "side_10", next_help_heading = "Buttons")]
+    #[command(name = "10")]
     Side10 {
         #[command(subcommand)]
         action: Action,
     },
     /// Thumb grid button 11
-    #[command(name = "side_11", next_help_heading = "Buttons")]
+    #[command(name = "11")]
     Side11 {
         #[command(subcommand)]
         action: Action,
     },
     /// Thumb grid button 12
-    #[command(name = "side_12", next_help_heading = "Buttons")]
+    #[command(name = "12")]
     Side12 {
         #[command(subcommand)]
         action: Action,
     },
     /// The left button
-    #[command(name = "left", next_help_heading = "Buttons")]
+    #[command(name = "left")]
     Left {
         #[command(subcommand)]
         action: Action,
     },
     /// The right button
-    #[command(name = "right", next_help_heading = "Buttons")]
+    #[command(name = "right")]
     Right {
         #[command(subcommand)]
         action: Action,
     },
     /// The wheel click
-    #[command(name = "middle", next_help_heading = "Buttons")]
+    #[command(name = "middle")]
     Middle {
         #[command(subcommand)]
         action: Action,
     },
     /// The small button beside the left click
-    #[command(name = "fire", next_help_heading = "Buttons")]
+    #[command(name = "fire")]
     Fire {
         #[command(subcommand)]
         action: Action,
@@ -196,18 +272,18 @@ impl Set {
     /// (config name, action) for the button variants.
     pub fn button(self) -> Result<(&'static str, Action), Self> {
         Ok(match self {
-            Set::Side1 { action } => ("side_1", action),
-            Set::Side2 { action } => ("side_2", action),
-            Set::Side3 { action } => ("side_3", action),
-            Set::Side4 { action } => ("side_4", action),
-            Set::Side5 { action } => ("side_5", action),
-            Set::Side6 { action } => ("side_6", action),
-            Set::Side7 { action } => ("side_7", action),
-            Set::Side8 { action } => ("side_8", action),
-            Set::Side9 { action } => ("side_9", action),
-            Set::Side10 { action } => ("side_10", action),
-            Set::Side11 { action } => ("side_11", action),
-            Set::Side12 { action } => ("side_12", action),
+            Set::Side1 { action } => ("1", action),
+            Set::Side2 { action } => ("2", action),
+            Set::Side3 { action } => ("3", action),
+            Set::Side4 { action } => ("4", action),
+            Set::Side5 { action } => ("5", action),
+            Set::Side6 { action } => ("6", action),
+            Set::Side7 { action } => ("7", action),
+            Set::Side8 { action } => ("8", action),
+            Set::Side9 { action } => ("9", action),
+            Set::Side10 { action } => ("10", action),
+            Set::Side11 { action } => ("11", action),
+            Set::Side12 { action } => ("12", action),
             Set::Left { action } => ("left", action),
             Set::Right { action } => ("right", action),
             Set::Middle { action } => ("middle", action),
@@ -217,20 +293,89 @@ impl Set {
     }
 }
 
-#[derive(Args)]
-#[group(required = true, multiple = true)]
-pub struct Lighting {
-    #[arg(long)]
-    pub mode: Option<LightMode>,
-    /// #rrggbb, for steady and breathing
-    #[arg(long, value_parser = parse_color)]
-    pub color: Option<String>,
-    /// 1-255, for steady
-    #[arg(long, value_parser = clap::value_parser!(u8).range(1..=255))]
-    pub brightness: Option<u8>,
-    /// 1-5, for breathing and neon
-    #[arg(long, value_parser = clap::value_parser!(u8).range(1..=5))]
-    pub speed: Option<u8>,
+#[derive(Subcommand)]
+pub enum SetDpi {
+    /// All five levels at once
+    Levels {
+        /// Five values, 100-16000 in steps of 100
+        #[arg(num_args = 5, value_parser = parse_dpi, required = true)]
+        dpi: Vec<u16>,
+    },
+    /// Which level is active
+    Active {
+        #[arg(value_parser = clap::value_parser!(u8).range(1..=5))]
+        level: u8,
+    },
+    /// Level 1
+    #[command(name = "1")]
+    L1 {
+        /// 100-16000 in steps of 100
+        #[arg(value_parser = parse_dpi)]
+        dpi: u16,
+    },
+    /// Level 2
+    #[command(name = "2")]
+    L2 {
+        /// 100-16000 in steps of 100
+        #[arg(value_parser = parse_dpi)]
+        dpi: u16,
+    },
+    /// Level 3
+    #[command(name = "3")]
+    L3 {
+        /// 100-16000 in steps of 100
+        #[arg(value_parser = parse_dpi)]
+        dpi: u16,
+    },
+    /// Level 4
+    #[command(name = "4")]
+    L4 {
+        /// 100-16000 in steps of 100
+        #[arg(value_parser = parse_dpi)]
+        dpi: u16,
+    },
+    /// Level 5
+    #[command(name = "5")]
+    L5 {
+        /// 100-16000 in steps of 100
+        #[arg(value_parser = parse_dpi)]
+        dpi: u16,
+    },
+}
+
+impl SetDpi {
+    /// Level number and value for the single-level variants.
+    pub fn single(&self) -> Option<(usize, u16)> {
+        match *self {
+            SetDpi::L1 { dpi } => Some((1, dpi)),
+            SetDpi::L2 { dpi } => Some((2, dpi)),
+            SetDpi::L3 { dpi } => Some((3, dpi)),
+            SetDpi::L4 { dpi } => Some((4, dpi)),
+            SetDpi::L5 { dpi } => Some((5, dpi)),
+            _ => None,
+        }
+    }
+}
+
+#[derive(Subcommand)]
+pub enum SetLighting {
+    Mode { mode: LightMode },
+    /// For steady and breathing
+    Color {
+        /// #rrggbb
+        #[arg(value_parser = parse_color)]
+        color: String,
+    },
+    /// For steady
+    Brightness {
+        #[arg(value_parser = clap::value_parser!(u8).range(1..=255))]
+        brightness: u8,
+    },
+    /// For breathing and neon
+    Speed {
+        #[arg(value_parser = clap::value_parser!(u8).range(1..=5))]
+        speed: u8,
+    },
 }
 
 #[derive(Subcommand)]
@@ -272,27 +417,6 @@ pub enum Action {
         speed: u8,
         times: u8,
     },
-}
-
-#[derive(ValueEnum, Clone, Copy)]
-pub enum Button {
-    #[value(name = "side_1")] Side1,
-    #[value(name = "side_2")] Side2,
-    #[value(name = "side_3")] Side3,
-    #[value(name = "side_4")] Side4,
-    #[value(name = "side_5")] Side5,
-    #[value(name = "side_6")] Side6,
-    #[value(name = "side_7")] Side7,
-    #[value(name = "side_8")] Side8,
-    #[value(name = "side_9")] Side9,
-    #[value(name = "side_10")] Side10,
-    #[value(name = "side_11")] Side11,
-    #[value(name = "side_12")] Side12,
-    Left,
-    Right,
-    Middle,
-    /// The small button beside the left click
-    Fire,
 }
 
 #[derive(ValueEnum, Clone, Copy)]

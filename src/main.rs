@@ -18,7 +18,7 @@ use std::process::ExitCode;
 use clap::{CommandFactory, Parser};
 use serde_yaml_ng::{Mapping, Value};
 
-use cli::{name, Action, Cli, Command, Get, Set};
+use cli::{name, Action, Cli, Command, DpiPart, Get, LightPart, Set, SetDpi, SetLighting};
 use device::Mouse;
 
 fn default_config() -> PathBuf {
@@ -82,31 +82,25 @@ fn action_value(action: Action) -> Value {
 fn set(mouse: &mut Mouse, what: Set) -> Result<(), String> {
     let conf = match what {
         Set::PollingRate { rate } => nested(&["polling_rate"], name(rate).parse::<u64>().unwrap().into()),
-        Set::Dpi { level, dpi } => {
+        Set::Dpi(SetDpi::Levels { dpi }) => nested(&["dpi", "levels"], dpi.into_iter().map(Value::from).collect()),
+        Set::Dpi(SetDpi::Active { level }) => nested(&["dpi", "active"], level.into()),
+        Set::Dpi(one) => {
+            let (level, dpi) = one.single().expect("the other SetDpi variants are matched above");
             let mut levels = dump::dpi_levels(mouse)?;
-            levels[level as usize - 1] = dpi;
+            levels[level - 1] = dpi;
             nested(&["dpi", "levels"], levels.into_iter().map(Value::from).collect())
         }
-        Set::DpiLevels { dpi } => nested(&["dpi", "levels"], dpi.into_iter().map(Value::from).collect()),
-        Set::ActiveDpi { level } => nested(&["dpi", "active"], level.into()),
         Set::Lighting(l) => {
-            let mut m = Mapping::new();
-            if let Some(mode) = l.mode {
-                m.insert("mode".into(), name(mode).into());
-            }
-            if let Some(c) = l.color {
-                m.insert("color".into(), c.into());
-            }
-            if let Some(b) = l.brightness {
-                m.insert("brightness".into(), b.into());
-            }
-            if let Some(s) = l.speed {
-                m.insert("speed".into(), s.into());
-            }
-            nested(&["lighting"], Value::Mapping(m))
+            let (key, value): (&str, Value) = match l {
+                SetLighting::Mode { mode } => ("mode", name(mode).into()),
+                SetLighting::Color { color } => ("color", color.into()),
+                SetLighting::Brightness { brightness } => ("brightness", brightness.into()),
+                SetLighting::Speed { speed } => ("speed", speed.into()),
+            };
+            nested(&["lighting", key], value)
         }
         button => {
-            let Ok((button, action)) = button.button() else { unreachable!() };
+            let Ok((button, action)) = button.button() else { unreachable!("all other Set variants are matched above") };
             nested(&["buttons", button], action_value(action))
         }
     };
@@ -115,19 +109,49 @@ fn set(mouse: &mut Mouse, what: Set) -> Result<(), String> {
 }
 
 fn get(mouse: &mut Mouse, what: Option<Get>) -> Result<(), String> {
+    // Single values come straight from memory: the dump leaves out what the current mode
+    // doesn't use (the colour while the light is off, say).
+    match what {
+        Some(Get::Dpi { part: Some(part) }) => {
+            let levels = dump::dpi_levels(mouse)?;
+            let list = || levels.iter().map(u16::to_string).collect::<Vec<_>>().join(", ");
+            match part {
+                DpiPart::Levels => println!("[{}]", list()),
+                DpiPart::Active => println!("{}", mouse.read(protocol::ADDR_DPI_ACTIVE, 1)?[0]),
+                level => println!("{}", levels[name(level).parse::<usize>().unwrap() - 1]),
+            }
+            return Ok(());
+        }
+        Some(Get::Lighting { part: Some(part) }) => {
+            let mem = mouse.read(protocol::ADDR_COLOR, 9)?;
+            let at = |addr: u16| mem[(addr - protocol::ADDR_COLOR) as usize];
+            match part {
+                LightPart::Mode => {
+                    let m = at(protocol::ADDR_LIGHT_MODE) as usize;
+                    println!("{}", protocol::LIGHT_MODES.get(m).copied().unwrap_or("unknown"));
+                }
+                LightPart::Color => println!("#{:02x}{:02x}{:02x}", mem[0], mem[1], mem[2]),
+                LightPart::Brightness => println!("{}", at(protocol::ADDR_BRIGHTNESS)),
+                LightPart::Speed => println!("{}", at(protocol::ADDR_SPEED)),
+            }
+            return Ok(());
+        }
+        _ => {}
+    }
+
     let full = dump::dump(mouse)?;
     let Some(what) = what else {
         print!("{full}");
         return Ok(());
     };
-    // The dump is the one decoder; print the requested part as it appears there, so the output
-    // can be pasted into a config file.
+    // Sections and buttons are printed as they appear in the dump, so the output can be pasted
+    // into a config file.
     let (section, key) = match what {
         Get::PollingRate => ("polling_rate", None),
-        Get::Dpi => ("dpi", None),
-        Get::Lighting => ("lighting", None),
+        Get::Dpi { .. } => ("dpi", None),
+        Get::Lighting { .. } => ("lighting", None),
         Get::Buttons => ("buttons", None),
-        Get::Button { button } => ("buttons", Some(name(button))),
+        button => ("buttons", button.button()),
     };
     let lines: Vec<&str> = full.lines().collect();
     let at = lines.iter().position(|l| l.starts_with(&format!("{section}:"))).ok_or("not in the dump")?;

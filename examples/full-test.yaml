@@ -7,18 +7,18 @@ macros:
   hello: [down shift, down h, up h, up shift, down e, up e, down l, up l, down l, up l, down o, up o, down space, up space]
   clicker: [down left, wait 40, up left, wait 300]
 buttons:
-  side_1: {key: a}
-  side_2: {key: shift+b}
-  side_3: back
-  side_4: forward
-  side_5: {media: volume-up}
-  side_6: {media: mute}
-  side_7: {macro: hello, repeat: 1}
-  side_8: {macro: hello, repeat: 3}
-  side_9: {macro: hello, repeat: until-key}
-  side_10: {macro: clicker, repeat: while-held}
-  side_11: dpi-loop
-  side_12: rgb-toggle
+  1: {key: a}
+  2: {key: shift+b}
+  3: back
+  4: forward
+  5: {media: volume-up}
+  6: {media: mute}
+  7: {macro: hello, repeat: 1}
+  8: {macro: hello, repeat: 3}
+  9: {macro: hello, repeat: until-key}
+  10: {macro: clicker, repeat: while-held}
+  11: dpi-loop
+  12: rgb-toggle
   left: left
   right: right
   middle: middle

@@ -60,12 +60,12 @@ pub const BACKUP_RANGES: [(u16, usize); 5] = [
 ];
 pub const BACKUP_END: usize = 0x300 + MACRO_SIZE * MACRO_COUNT;
 
-/// Button name -> record index. side_1..side_12 follow the vendor tool's numbering of the thumb
-/// grid; fire is the small button beside the left click.
+/// Button name -> record index. 1-12 are the thumb grid, numbered as in the vendor tool; fire
+/// is the small button beside the left click.
 pub const BUTTONS: [(&str, usize); 16] = [
-    ("side_1", 0), ("side_2", 1), ("side_3", 2), ("side_4", 3),
-    ("side_5", 4), ("side_6", 5), ("side_7", 8), ("side_8", 9),
-    ("side_9", 12), ("side_10", 13), ("side_11", 14), ("side_12", 15),
+    ("1", 0), ("2", 1), ("3", 2), ("4", 3),
+    ("5", 4), ("6", 5), ("7", 8), ("8", 9),
+    ("9", 12), ("10", 13), ("11", 14), ("12", 15),
     ("left", 7), ("right", 6), ("middle", 10), ("fire", 11),
 ];
 

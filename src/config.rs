@@ -108,9 +108,10 @@ pub fn plan(text: &str) -> Result<Vec<Write>, String> {
     if let Some(buttons) = root.get("buttons") {
         let buttons = buttons.as_mapping().ok_or("buttons must be a mapping")?;
         for (name, action) in buttons {
-            let name = name.as_str().ok_or("button names must be strings")?;
+            let name = scalar(name).ok_or("button names are 1-12, left, right, middle or fire")?;
+            let name = name.as_str();
             let rec = lookup(&BUTTONS, name)
-                .ok_or(format!("unknown button {name:?} (side_1..side_12, left, right, middle, fire)"))?;
+                .ok_or(format!("unknown button {name:?} (1-12, left, right, middle, fire)"))?;
             let (record, slot) = encode_button(action, &macro_names)
                 .map_err(|e| format!("button {name}: {e}"))?;
             if let Some(slot) = slot {

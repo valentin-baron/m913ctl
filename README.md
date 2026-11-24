@@ -8,13 +8,18 @@ Works on Linux and Windows (and should on macOS, untested), with the wireless re
 (`25a7:fa07`) or the cable (`25a7:fa08`).
 
 ```
-m913ctl get                       # everything, in the config format
-m913ctl get dpi                   # or: polling-rate, lighting, buttons, button <BUTTON>
-m913ctl set fire key f13          # one button
-m913ctl set side_3 media play-pause
-m913ctl set dpi 2 1600            # one DPI level
-m913ctl set lighting --mode steady --color "#ff8000"
-m913ctl apply m913.yaml           # a whole config file
+m913ctl get                         # everything, in the config format
+m913ctl get dpi                     # one section: polling-rate, dpi, lighting, buttons
+m913ctl get dpi levels              # one value: dpi levels|active|1-5, lighting mode|color|brightness|speed
+m913ctl get fire                    # one button: 1-12, left, right, middle, fire
+
+m913ctl set fire key f13
+m913ctl set 3 media play-pause
+m913ctl set dpi 2 1600              # or: set dpi levels 800 1600 3200 6400 12000, set dpi active 2
+m913ctl set lighting color "#ff8000"
+m913ctl set polling-rate 1000
+
+m913ctl apply m913.yaml             # a whole config file
 ```
 
 Every command and value is listed in `--help` at each level (`m913ctl set --help`,
@@ -25,7 +30,7 @@ ones. Shell completions: `m913ctl completions fish > ~/.config/fish/completions/
 | command | |
 |---|---|
 | `get [PART]` | current settings, all of them or one part |
-| `set …` | change one setting: `polling-rate`, `dpi`, `dpi-levels`, `active-dpi`, `lighting`, or a button (`side_1` … `side_12`, `left`, `right`, `middle`, `fire`) |
+| `set …` | change one setting: `polling-rate`, `dpi …`, `lighting …`, or a button (`1` … `12`, `left`, `right`, `middle`, `fire`) |
 | `apply [FILE]` | write a config file; default `$XDG_CONFIG_HOME/m913ctl/config.yaml` |
 | `check [FILE]` | validate a config file without touching the mouse |
 | `dump` | same as `get` |
@@ -74,17 +79,17 @@ macros:                       # up to 15; names up to 14 characters
   hello: [down shift, down h, up h, up shift, down e, up e, down l, up l, down l, up l, down o, up o]
   clicker: [down left, wait 40, up left, wait 300]
 buttons:
-  side_1: {key: a}
-  side_2: {key: ctrl+shift+t}
-  side_3: back
-  side_4: {media: play-pause}
-  side_5: {macro: hello, repeat: 1}
-  side_6: {macro: clicker, repeat: while-held}
-  side_12: dpi-loop
+  1: {key: a}
+  2: {key: ctrl+shift+t}
+  3: back
+  4: {media: play-pause}
+  5: {macro: hello, repeat: 1}
+  6: {macro: clicker, repeat: while-held}
+  12: dpi-loop
   fire: {key: f13}
 ```
 
-**Buttons**: `side_1` … `side_12` are the thumb grid, numbered as in Redragon's software; `left`,
+**Buttons**: `1` … `12` are the thumb grid, numbered as in Redragon's software; `left`,
 `right`, `middle`; `fire` is the small button beside the left click. The two DPI buttons behind
 the wheel are fixed in the firmware and can't be remapped.
 

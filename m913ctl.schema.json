@@ -88,40 +88,40 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "side_1": {
+        "1": {
           "$ref": "#/$defs/action"
         },
-        "side_2": {
+        "2": {
           "$ref": "#/$defs/action"
         },
-        "side_3": {
+        "3": {
           "$ref": "#/$defs/action"
         },
-        "side_4": {
+        "4": {
           "$ref": "#/$defs/action"
         },
-        "side_5": {
+        "5": {
           "$ref": "#/$defs/action"
         },
-        "side_6": {
+        "6": {
           "$ref": "#/$defs/action"
         },
-        "side_7": {
+        "7": {
           "$ref": "#/$defs/action"
         },
-        "side_8": {
+        "8": {
           "$ref": "#/$defs/action"
         },
-        "side_9": {
+        "9": {
           "$ref": "#/$defs/action"
         },
-        "side_10": {
+        "10": {
           "$ref": "#/$defs/action"
         },
-        "side_11": {
+        "11": {
           "$ref": "#/$defs/action"
         },
-        "side_12": {
+        "12": {
           "$ref": "#/$defs/action"
         },
         "left": {

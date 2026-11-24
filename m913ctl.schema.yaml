@@ -64,18 +64,18 @@ properties:
     type: object
     additionalProperties: false
     properties:
-      side_1: {$ref: "#/$defs/action"}
-      side_2: {$ref: "#/$defs/action"}
-      side_3: {$ref: "#/$defs/action"}
-      side_4: {$ref: "#/$defs/action"}
-      side_5: {$ref: "#/$defs/action"}
-      side_6: {$ref: "#/$defs/action"}
-      side_7: {$ref: "#/$defs/action"}
-      side_8: {$ref: "#/$defs/action"}
-      side_9: {$ref: "#/$defs/action"}
-      side_10: {$ref: "#/$defs/action"}
-      side_11: {$ref: "#/$defs/action"}
-      side_12: {$ref: "#/$defs/action"}
+      "1": {$ref: "#/$defs/action"}
+      "2": {$ref: "#/$defs/action"}
+      "3": {$ref: "#/$defs/action"}
+      "4": {$ref: "#/$defs/action"}
+      "5": {$ref: "#/$defs/action"}
+      "6": {$ref: "#/$defs/action"}
+      "7": {$ref: "#/$defs/action"}
+      "8": {$ref: "#/$defs/action"}
+      "9": {$ref: "#/$defs/action"}
+      "10": {$ref: "#/$defs/action"}
+      "11": {$ref: "#/$defs/action"}
+      "12": {$ref: "#/$defs/action"}
       left: {$ref: "#/$defs/action"}
       right: {$ref: "#/$defs/action"}
       middle: {$ref: "#/$defs/action"}

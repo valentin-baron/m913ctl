@@ -40,38 +40,38 @@
     ]
   },
   "buttons": {
-    "side_1": {
+    "1": {
       "key": "a"
     },
-    "side_2": {
+    "2": {
       "key": "shift+b"
     },
-    "side_3": "back",
-    "side_4": "forward",
-    "side_5": {
+    "3": "back",
+    "4": "forward",
+    "5": {
       "media": "volume-up"
     },
-    "side_6": {
+    "6": {
       "media": "mute"
     },
-    "side_7": {
+    "7": {
       "macro": "hello",
       "repeat": 1
     },
-    "side_8": {
+    "8": {
       "macro": "hello",
       "repeat": 3
     },
-    "side_9": {
+    "9": {
       "macro": "hello",
       "repeat": "until-key"
     },
-    "side_10": {
+    "10": {
       "macro": "clicker",
       "repeat": "while-held"
     },
-    "side_11": "dpi-loop",
-    "side_12": "rgb-toggle",
+    "11": "dpi-loop",
+    "12": "rgb-toggle",
     "left": "left",
     "right": "right",
     "middle": "middle",
