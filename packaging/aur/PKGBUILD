@@ -12,7 +12,7 @@ makedepends=('cargo')
 # the binary is stripped by Cargo already, so a debug package would be empty
 options=('!lto' '!debug')
 source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
-sha256sums=('3b3b04efed684ea933c03c2edd506ca61303c940f193cfb7d9b733e9157b6fa7')
+sha256sums=('33bc2aadd5e1f6d2fca56dcbd1928551ba7dc4bf5a09d7b9773bdbd0904b4e8a')
 
 prepare() {
   cd "$pkgname-$pkgver"
