@@ -80,9 +80,14 @@ impl Mouse {
     /// A status query outside the memory map (online, battery): `08 cmd`, answered by
     /// `09 cmd 00 00 00 len <data>`. Byte 2 of the answer is 0 on success.
     pub fn query(&mut self, cmd: u8) -> Result<Vec<u8>, String> {
+        self.query_with(cmd, &[])
+    }
+
+    /// A status command with data, answered like `query`.
+    pub fn query_with(&mut self, cmd: u8, data: &[u8]) -> Result<Vec<u8>, String> {
         let mut last = String::new();
         for _ in 0..3 {
-            match self.try_query(cmd) {
+            match self.try_query(cmd, data) {
                 Ok(v) => return Ok(v),
                 Err(e) => last = e,
             }
@@ -90,8 +95,9 @@ impl Mouse {
         Err(last)
     }
 
-    fn try_query(&mut self, cmd: u8) -> Result<Vec<u8>, String> {
-        let mut msg = vec![0x08, cmd];
+    fn try_query(&mut self, cmd: u8, data: &[u8]) -> Result<Vec<u8>, String> {
+        let mut msg = vec![0x08, cmd, 0, 0, 0, data.len() as u8];
+        msg.extend_from_slice(data);
         msg.resize(16, 0);
         let msg = closed(&msg);
         self.request.send_feature_report(&msg).map_err(|e| format!("sending {}: {e}", hex(&msg)))?;

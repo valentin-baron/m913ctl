@@ -20,6 +20,11 @@ arrow-left arrow-right. Modifiers: ctrl shift alt win, joined with +.";
 pub struct Cli {
     #[command(subcommand)]
     pub command: Command,
+
+    /// If the mouse is in standby, wait (for as long as it takes) until it's moved instead of
+    /// failing
+    #[arg(long, global = true)]
+    pub wait: bool,
 }
 
 #[derive(Subcommand)]
@@ -50,6 +55,10 @@ pub enum Command {
     Backup { file: PathBuf },
     /// Write a backup back to the mouse
     Restore { file: PathBuf },
+    /// Keep the mouse from going into standby, for a GUI that stays open. The mouse otherwise
+    /// stops answering about 20 s after the last movement, and only moving it wakes it up again.
+    /// Costs battery: turn it off when done (Redragon's software sets the same flag while it runs)
+    Keepalive { state: OnOff },
     /// Print shell completions, e.g. `m913ctl completions fish > ~/.config/fish/completions/m913ctl.fish`
     Completions { shell: Shell },
 }
@@ -465,6 +474,12 @@ scroll-down redo reply forward-mail send keyboard-layout-next all-applications;
 plus the regular media keys: media-player play-pause next previous stop mute volume-up
 volume-down email calculator my-computer www-home www-search www-forward www-back www-stop
 www-refresh www-favorites";
+
+#[derive(ValueEnum, Clone, Copy, PartialEq)]
+pub enum OnOff {
+    On,
+    Off,
+}
 
 #[derive(ValueEnum, Clone, Copy)]
 pub enum PollingRate {

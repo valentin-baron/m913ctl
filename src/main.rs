@@ -243,11 +243,30 @@ fn get(mouse: &mut Mouse, what: Option<Get>) -> Result<(), String> {
     Ok(())
 }
 
+/// Opens the mouse; with `--wait`, first waits (for as long as it takes) for it to come out of
+/// standby. The receiver answers the online query even while the mouse sleeps.
+fn open(wait: bool) -> Result<Mouse, String> {
+    let mut mouse = Mouse::open()?;
+    if !wait {
+        return Ok(mouse);
+    }
+    let mut told = false;
+    while mouse.query(protocol::QUERY_ONLINE)?.first() != Some(&1) {
+        if !told {
+            eprintln!("m913ctl: the mouse is in standby, move it");
+            told = true;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(250));
+    }
+    Ok(mouse)
+}
+
 fn run(cli: Cli) -> Result<(), String> {
+    let wait = cli.wait;
     match cli.command {
-        Command::Get { what } => get(&mut Mouse::open()?, what)?,
-        Command::Dump => get(&mut Mouse::open()?, None)?,
-        Command::Set { what } => set(&mut Mouse::open()?, what)?,
+        Command::Get { what } => get(&mut open(wait)?, what)?,
+        Command::Dump => get(&mut open(wait)?, None)?,
+        Command::Set { what } => set(&mut open(wait)?, what)?,
         Command::Check { file } => {
             let path = file.unwrap_or_else(default_config);
             let writes = plan_file(&path)?;
@@ -255,10 +274,10 @@ fn run(cli: Cli) -> Result<(), String> {
         }
         Command::Apply { file } => {
             let writes = plan_file(&file.unwrap_or_else(default_config))?;
-            write(&mut Mouse::open()?, writes)?;
+            write(&mut open(wait)?, writes)?;
         }
         Command::Backup { file } => {
-            let mem = Mouse::open()?.read(0, protocol::BACKUP_END)?;
+            let mem = open(wait)?.read(0, protocol::BACKUP_END)?;
             std::fs::write(&file, mem).map_err(|e| format!("{}: {e}", file.display()))?;
         }
         Command::Restore { file } => {
@@ -266,10 +285,20 @@ fn run(cli: Cli) -> Result<(), String> {
             if mem.len() != protocol::BACKUP_END {
                 return Err(format!("{} is not an m913ctl backup", file.display()));
             }
-            let mut mouse = Mouse::open()?;
+            let mut mouse = open(wait)?;
             for (addr, len) in protocol::BACKUP_RANGES {
                 mouse.write(addr, &mem[addr as usize..addr as usize + len])?;
             }
+        }
+        Command::Keepalive { state } => {
+            let mut mouse = open(wait)?;
+            let on = state == cli::OnOff::On;
+            // The receiver takes the flag either way, but a mouse in standby ignores it.
+            if on && mouse.query(protocol::QUERY_ONLINE)?.first() != Some(&1) {
+                return Err("the mouse is in standby; move it, then run this again".into());
+            }
+            mouse.query_with(protocol::QUERY_SOFTWARE_RUNNING, &[on as u8])?;
+            println!("keepalive {}", if on { "on" } else { "off" });
         }
         Command::Completions { shell } => {
             clap_complete::generate(shell, &mut command(), "m913ctl", &mut std::io::stdout());

@@ -35,6 +35,9 @@ pub fn closed(data: &[u8]) -> Vec<u8> {
 /// Status queries outside the memory map, as Redragon's software sends them.
 pub const QUERY_ONLINE: u8 = 0x03; // 1 while the mouse answers the receiver
 pub const QUERY_BATTERY: u8 = 0x04; // battery level in tens of percent, 0-10
+/// "Configuration software running" (1) or not (0). While 1, an awake mouse doesn't go into
+/// standby (it otherwise does about 20 s after the last movement); it can't wake a sleeping one.
+pub const QUERY_SOFTWARE_RUNNING: u8 = 0x02;
 
 pub const ADDR_POLLING: u16 = 0x00;
 /// 0 or 1: which of the two profiles is active (the button under the mouse toggles them).

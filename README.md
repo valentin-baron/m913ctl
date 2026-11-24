@@ -91,8 +91,7 @@ buttons:
 
 ## Good to know
 
-- **The mouse sleeps.** A wireless M913 that hasn't moved for a while stops answering, and
-  m913ctl reports "no answer … mouse asleep?". Move the mouse and run the command again.
+- **The mouse sleeps.** About 20 seconds after it was last moved, a wireless M913 stops answering, and m913ctl reports "mouse asleep? move it". Nothing on the computer can wake it; move the mouse and run the command again, or add `--wait` to any command, which then waits until the mouse is moved. A GUI built on m913ctl can run `m913ctl keepalive on` while it's open (and `off` when it closes) to keep an awake mouse from sleeping, the way Redragon's software does. That costs battery.
 - **Lighting** only shows with the mouse's eco mode off. The side-button backlight is always red;
   the firmware doesn't let it change.
 - **Profiles**: the button on the underside switches between two profiles (it's not a reset

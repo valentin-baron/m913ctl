@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- `--wait` (any command): if the mouse is in standby, wait until it's moved instead of failing.
+- `m913ctl keepalive on|off` keeps an awake mouse from going into standby, for a GUI that stays open (Redragon's software sets the same flag while it runs). It can't wake a sleeping mouse, and it costs battery while on.
+
 ## 0.0.2 - 2026-11-24
 
 - `m913ctl get battery` shows the battery level, in steps of 10% as the mouse reports it, and
