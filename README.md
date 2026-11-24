@@ -85,8 +85,8 @@ buttons:
   m913ctl reports "no answer … mouse asleep?". Move the mouse and run the command again.
 - **Lighting** only shows with the mouse's eco mode off. The side-button backlight is always red;
   the firmware doesn't let it change.
-- **Profiles**: the switch under the mouse selects one of two profiles; m913ctl reads and writes
-  whichever is active.
+- **Profiles**: the button on the underside switches between two profiles (it's not a reset
+  button). m913ctl reads and writes the active one; `m913ctl get profile` says which.
 - **Not supported**: the DPI-indicator colours, which Redragon's software never changes either.
 - **Every write is read back and checked.** The mouse acknowledges some writes it then ignores
   (too many keys on one button), so m913ctl doesn't trust the acknowledgement alone.

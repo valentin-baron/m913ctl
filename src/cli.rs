@@ -62,6 +62,8 @@ pub enum Get {
     Dpi { part: Option<DpiPart> },
     /// Logo lighting, or one part of it
     Lighting { part: Option<LightPart> },
+    /// Which profile is active, 1 or 2 (the button under the mouse switches)
+    Profile,
     /// Every button's action
     Buttons,
     /// The macros stored in the mouse, which buttons can be set to (`set <BUTTON> macro <NAME>`)
@@ -443,7 +445,24 @@ pub enum Experimental {
         #[arg(required = true)]
         keys: Vec<String>,
     },
+    /// A media key Redragon's software doesn't offer: a name below, or any 16-bit consumer
+    /// code such as 0x01a6. Names are what Linux makes of the code
+    #[command(after_help = CUSTOM_MEDIA_HELP)]
+    CustomMediaButton { key: String },
 }
+
+const CUSTOM_MEDIA_HELP: &str = "\
+Names:
+brightness-up brightness-down keyboard-backlight-up keyboard-backlight-down keyboard-backlight-
+toggle power sleep menu media-play media-pause record fast-forward rewind eject shuffle repeat
+voice-command dictate emoji-picker bass-boost word-processor text-editor spreadsheet
+presentation calendar task-manager chat log-off screen-lock control-panel app-switcher help
+documents screensaver file-manager images audio video assistant new open close save print-
+document properties undo copy cut paste find zoom-in zoom-out zoom-reset full-screen scroll-up
+scroll-down redo reply forward-mail send keyboard-layout-next all-applications;
+plus the regular media keys: media-player play-pause next previous stop mute volume-up
+volume-down email calculator my-computer www-home www-search www-forward www-back www-stop
+www-refresh www-favorites";
 
 #[derive(ValueEnum, Clone, Copy)]
 pub enum PollingRate {

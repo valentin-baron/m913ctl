@@ -23,6 +23,7 @@ For completion and error checking in editors with yaml-language-server, start th
 - [`lighting`](#lighting)
 - [`macros`](#macros)
 - [`buttons`](#buttons)
+- [Profiles](#profiles)
 - [Key names](#key-names)
 - [Limits](#limits)
 - [Full example](#full-example)
@@ -100,8 +101,10 @@ order of the file. A button refers to a macro by name — in the same file, or (
 | `up X` | release X |
 | `wait MS` | pause after the previous step, in milliseconds (up to 65535) |
 
-`X` is a [key](#key-names), a modifier (`ctrl` `shift` `alt` `win`) or a mouse button (`left`
-`right` `middle` `back` `forward`). A step without a `wait` after it is followed by 3 ms, the
+`X` is a [key](#key-names), a modifier (`ctrl` `shift` `alt` `win`), a mouse button (`left`
+`right` `middle` `back` `forward`), or — *experimental*, Redragon's software doesn't offer it — a
+media key: any name from [`media`](#media) or [`custom_media_button`](#custom_media_button), or a
+code like `0x01a6`. Tested on the mouse: `[down volume-up, wait 100, up volume-up]` works. A step without a `wait` after it is followed by 3 ms, the
 same as Redragon's software. A macro can't start with a `wait`.
 
 | limit | |
@@ -253,6 +256,38 @@ button), and the firmware applies that rule to the whole list:
 | mouse clicks, repeat modes | no | yes |
 
 The `key_sequence` timings were measured on the mouse.
+
+#### `custom_media_button`
+
+A media (consumer) key beyond the 18 Redragon's software offers: by name, or any 16-bit code.
+
+```yaml
+buttons:
+  11: {experimental: {custom_media_button: brightness-up}}
+  12: {experimental: {custom_media_button: 0x01a6}}
+```
+
+It behaves like [`media`](#media): held as long as the button is. Tested on the mouse with
+`brightness-up` and `0x01a6`; whether the computer does anything with a code is up to the
+computer. The names are what Linux maps each code to (`drivers/hid/hid-input.c`):
+
+`brightness-up` `brightness-down` `keyboard-backlight-up` `keyboard-backlight-down` `keyboard-
+backlight-toggle` `power` `sleep` `menu` `media-play` `media-pause` `record` `fast-forward`
+`rewind` `eject` `shuffle` `repeat` `voice-command` `dictate` `emoji-picker` `bass-boost` `word-
+processor` `text-editor` `spreadsheet` `presentation` `calendar` `task-manager` `chat` `log-off`
+`screen-lock` `control-panel` `app-switcher` `help` `documents` `screensaver` `file-manager`
+`images` `audio` `video` `assistant` `new` `open` `close` `save` `print-document` `properties`
+`undo` `copy` `cut` `paste` `find` `zoom-in` `zoom-out` `zoom-reset` `full-screen` `scroll-up`
+`scroll-down` `redo` `reply` `forward-mail` `send` `keyboard-layout-next` `all-applications`
+
+Codes without a name are written as hex — quote-free `0x01a6` works in YAML.
+
+## Profiles
+
+The mouse has two profiles; the button on its underside switches between them (it is not a
+reset button). Each holds its own polling rate, DPI levels, lighting and buttons. m913ctl always
+reads and writes the **active** one — `m913ctl get profile` says which (`get` prints it as its
+first line), so to configure the other, press the button and run m913ctl again.
 
 ## Key names
 

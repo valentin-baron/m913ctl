@@ -33,6 +33,8 @@ pub fn closed(data: &[u8]) -> Vec<u8> {
 }
 
 pub const ADDR_POLLING: u16 = 0x00;
+/// 0 or 1: which of the two profiles is active (the button under the mouse toggles them).
+pub const ADDR_PROFILE: u16 = 0x04;
 pub const ADDR_DPI_ACTIVE: u16 = 0x02;
 pub const ADDR_DPI: u16 = 0x0c;
 pub const ADDR_COLOR: u16 = 0x54;
@@ -104,6 +106,73 @@ pub const MEDIA: [(&str, u16); 18] = [
     ("email", 0x018a), ("calculator", 0x0192), ("my-computer", 0x0194), ("www-home", 0x0223),
     ("www-search", 0x0221), ("www-forward", 0x0225), ("www-back", 0x0224), ("www-stop", 0x0226),
     ("www-refresh", 0x0227), ("www-favorites", 0x022a),
+];
+
+/// Consumer codes Redragon's software doesn't offer, named after what Linux makes of them
+/// (drivers/hid/hid-input.c). Any other 16-bit code can be given as a number.
+pub const EXTRA_MEDIA: [(&str, u16); 62] = [
+    ("brightness-up", 0x006f),
+    ("brightness-down", 0x0070),
+    ("keyboard-backlight-up", 0x0079),
+    ("keyboard-backlight-down", 0x007a),
+    ("keyboard-backlight-toggle", 0x007c),
+    ("power", 0x0030),
+    ("sleep", 0x0032),
+    ("menu", 0x0040),
+    ("media-play", 0x00b0),
+    ("media-pause", 0x00b1),
+    ("record", 0x00b2),
+    ("fast-forward", 0x00b3),
+    ("rewind", 0x00b4),
+    ("eject", 0x00b8),
+    ("shuffle", 0x00b9),
+    ("repeat", 0x00bc),
+    ("voice-command", 0x00cf),
+    ("dictate", 0x00d8),
+    ("emoji-picker", 0x00d9),
+    ("bass-boost", 0x00e5),
+    ("word-processor", 0x0184),
+    ("text-editor", 0x0185),
+    ("spreadsheet", 0x0186),
+    ("presentation", 0x0188),
+    ("calendar", 0x018e),
+    ("task-manager", 0x018f),
+    ("chat", 0x0199),
+    ("log-off", 0x019c),
+    ("screen-lock", 0x019e),
+    ("control-panel", 0x019f),
+    ("app-switcher", 0x01a2),
+    ("help", 0x01a6),
+    ("documents", 0x01a7),
+    ("screensaver", 0x01b1),
+    ("file-manager", 0x01b4),
+    ("images", 0x01b6),
+    ("audio", 0x01b7),
+    ("video", 0x01b8),
+    ("assistant", 0x01cb),
+    ("new", 0x0201),
+    ("open", 0x0202),
+    ("close", 0x0203),
+    ("save", 0x0207),
+    ("print-document", 0x0208),
+    ("properties", 0x0209),
+    ("undo", 0x021a),
+    ("copy", 0x021b),
+    ("cut", 0x021c),
+    ("paste", 0x021d),
+    ("find", 0x021f),
+    ("zoom-in", 0x022d),
+    ("zoom-out", 0x022e),
+    ("zoom-reset", 0x022f),
+    ("full-screen", 0x0232),
+    ("scroll-up", 0x0233),
+    ("scroll-down", 0x0234),
+    ("redo", 0x0279),
+    ("reply", 0x0289),
+    ("forward-mail", 0x028b),
+    ("send", 0x028c),
+    ("keyboard-layout-next", 0x029d),
+    ("all-applications", 0x02a2),
 ];
 
 pub const MODIFIERS: [(&str, u16); 4] = [("ctrl", 0x01), ("shift", 0x02), ("alt", 0x04), ("win", 0x08)];

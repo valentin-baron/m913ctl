@@ -133,19 +133,28 @@ fn encode_button(action: &Value, macros: &[String]) -> Result<(Vec<u8>, Option<V
     let events: Vec<(u8, u16)> = if let Some(k) = map.get("key") {
         parse_combo(&scalar(k).ok_or("key must be a string")?)?
     } else if let Some(x) = map.get("experimental") {
-        // Not offered by the vendor tool. The mouse plays the events up to the first release when
-        // the button goes down and the rest when it comes up, 3 polls apart: "h, i" holds h while
-        // the button is held and types i on release.
-        let seq = x.get("key_sequence").and_then(Value::as_sequence)
-            .ok_or("experimental takes key_sequence: [key or combo, ...]")?;
-        let mut events = Vec::new();
-        for k in seq {
-            events.extend(parse_combo(&scalar(k).ok_or("key_sequence entries must be keys")?)?);
+        // Not offered by the vendor tool.
+        let x = x.as_mapping().filter(|m| m.len() == 1)
+            .ok_or("experimental takes one of key_sequence, custom_media_button")?;
+        if let Some(seq) = x.get("key_sequence") {
+            // The mouse plays the events up to the first release when the button goes down and
+            // the rest when it comes up, 3 polls apart: "h, i" holds h while the button is held
+            // and types i on release.
+            let seq = seq.as_sequence().ok_or("key_sequence takes a list of keys or combos")?;
+            let mut events = Vec::new();
+            for k in seq {
+                events.extend(parse_combo(&scalar(k).ok_or("key_sequence entries must be keys")?)?);
+            }
+            if events.is_empty() {
+                return Err("key_sequence is empty".into());
+            }
+            events
+        } else if let Some(m) = x.get("custom_media_button") {
+            let u = media_code(m)?;
+            vec![(EV_MEDIA, u), (EV_MEDIA & 0x0f | 0x40, u)]
+        } else {
+            return Err("experimental takes one of key_sequence, custom_media_button".into());
         }
-        if events.is_empty() {
-            return Err("key_sequence is empty".into());
-        }
-        events
     } else if let Some(m) = map.get("media") {
         let m = m.as_str().ok_or("media must be a string")?;
         let u = lookup(&MEDIA, m).ok_or(format!("unknown media key {m:?}"))?;
@@ -225,6 +234,8 @@ fn encode_macro(name: &str, steps: &[Value]) -> Result<Vec<u8>, String> {
                     (EV_MODIFIER, c)
                 } else if let Some(c) = key_code(arg) {
                     (EV_KEY, c)
+                } else if let Ok(c) = media_code(&Value::from(arg)) {
+                    (EV_MEDIA, c) // not offered by the vendor tool, but plays fine
                 } else {
                     return Err(format!("macro {name:?}: unknown key {arg:?}"));
                 };
@@ -255,6 +266,19 @@ fn encode_macro(name: &str, steps: &[Value]) -> Result<Vec<u8>, String> {
     }
     head.extend(closed(&body));
     Ok(head)
+}
+
+/// A consumer ("media") code: a name from MEDIA or EXTRA_MEDIA, or a number such as 0x01a6.
+fn media_code(v: &Value) -> Result<u16, String> {
+    let bad = || format!("unknown media key {} (a name from `m913ctl set 1 experimental custom-media-button --help`, or a code like 0x01a6)", show(v));
+    if let Some(n) = v.as_u64() {
+        return u16::try_from(n).map_err(|_| bad());
+    }
+    let s = v.as_str().ok_or_else(bad)?.to_lowercase();
+    if let Some(c) = lookup(&MEDIA, &s).or_else(|| lookup(&EXTRA_MEDIA, &s)) {
+        return Ok(c);
+    }
+    s.strip_prefix("0x").and_then(|h| u16::from_str_radix(h, 16).ok()).ok_or_else(bad)
 }
 
 fn parse_color(c: &str) -> Option<[u8; 3]> {
@@ -336,6 +360,17 @@ mod tests {
         let (rec, slot) = encode_button(&v, &[]).unwrap();
         assert_eq!(rec, [0x05, 0x00, 0x00, 0x50]);
         assert_eq!(slot.unwrap(), [0x04, 0x81, 0x0b, 0x00, 0x41, 0x0b, 0x00, 0x81, 0x0c, 0x00, 0x41, 0x0c, 0x00, 0x9f]);
+    }
+
+    /// Codes the vendor tool doesn't offer, as tested on the mouse.
+    #[test]
+    fn custom_media_matches_hardware_test() {
+        for (text, code) in [("brightness-up", 0x006fu16), ("0x01a6", 0x01a6), ("422", 0x01a6)] {
+            let v: Value = serde_yaml_ng::from_str(&format!("{{experimental: {{custom_media_button: {text}}}}}")).unwrap();
+            let (_, slot) = encode_button(&v, &[]).unwrap();
+            let body = [0x02, 0x82, code as u8, (code >> 8) as u8, 0x42, code as u8, (code >> 8) as u8];
+            assert_eq!(slot.unwrap(), closed(&body), "{text}");
+        }
     }
 
     #[test]

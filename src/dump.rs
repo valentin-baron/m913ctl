@@ -8,6 +8,7 @@ use crate::protocol::*;
 pub fn dump(mouse: &mut Mouse) -> Result<String, String> {
     let mem = mouse.read(0, 0xa0)?;
     let mut out = String::new();
+    writeln!(out, "# profile {} of 2 (the button under the mouse switches)", mem[ADDR_PROFILE as usize] + 1).unwrap();
 
     let polling = POLLING.iter().find(|(_, c)| *c == mem[0]).map(|(h, _)| h.to_string())
         .unwrap_or_else(|| format!("unknown 0x{:02x}", mem[0]));
@@ -95,6 +96,19 @@ pub fn stored_macros(mouse: &mut Mouse) -> Result<Vec<(usize, String)>, String> 
     Ok(out)
 }
 
+/// A consumer code by name where it has one, else as 0x....
+fn media_name(code: u16) -> String {
+    reverse(&MEDIA, code)
+        .or_else(|| reverse(&EXTRA_MEDIA, code))
+        .map(str::to_string)
+        .unwrap_or_else(|| format!("0x{code:04x}"))
+}
+
+/// Which profile is active, 1 or 2.
+pub fn profile(mouse: &mut Mouse) -> Result<u8, String> {
+    Ok(mouse.read(ADDR_PROFILE, 1)?[0] + 1)
+}
+
 /// The five DPI levels, for changing one of them.
 pub fn dpi_levels(mouse: &mut Mouse) -> Result<Vec<u16>, String> {
     let mem = mouse.read(ADDR_DPI, 20)?;
@@ -114,7 +128,7 @@ fn decode_sequence(slot: &[u8]) -> String {
     if let [(EV_MEDIA, u), _] = events[..] {
         return match reverse(&MEDIA, u) {
             Some(m) => format!("{{media: {m}}}"),
-            None => format!("{{media: unknown 0x{u:04x}}}"),
+            None => format!("{{experimental: {{custom_media_button: {}}}}}", media_name(u)),
         };
     }
     // Split into combos: one ends whenever nothing is held any more.
@@ -162,6 +176,7 @@ pub fn read_macro(mouse: &mut Mouse, index: usize) -> Result<(String, Vec<String
     for e in raw.chunks(5) {
         let (kind, code, delay) = (e[0], e[1] as u16 | (e[2] as u16) << 8, u16::from_be_bytes([e[3], e[4]]));
         let what = match kind & 0x0f | 0x80 {
+            EV_MEDIA => Some(media_name(code)),
             EV_MOUSE => reverse(&MOUSE, code).map(str::to_string),
             EV_MODIFIER => reverse(&MODIFIERS, code).map(str::to_string),
             EV_KEY => key_name(code),

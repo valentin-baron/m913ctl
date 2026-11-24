@@ -111,7 +111,7 @@ $defs:
   step:
     description: "down X / up X (a key, ctrl/shift/alt/win, or left/right/middle/back/forward), or wait MS: the delay after the previous step."
     type: string
-    pattern: "^((down|up) ([a-z0-9]|f([1-9]|1[0-9]|2[0-4])|kp[0-9]|kp[-+*/]|kpenter|enter|esc|backspace|tab|space|minus|equal|capslock|print|scrolllock|pause|insert|home|pageup|delete|end|pagedown|arrow-(up|down|left|right)|ctrl|shift|alt|win|left|right|middle|back|forward)|wait [0-9]+)$"
+    pattern: "^((down|up) ([a-z0-9]|f([1-9]|1[0-9]|2[0-4])|kp[0-9]|kp[-+*/]|kpenter|enter|esc|backspace|tab|space|minus|equal|capslock|print|scrolllock|pause|insert|home|pageup|delete|end|pagedown|arrow-(up|down|left|right)|ctrl|shift|alt|win|left|right|middle|back|forward|[a-z][a-z-]+|0x[0-9a-fA-F]{1,4})|wait [0-9]+)$"
 
   action:
     oneOf:
@@ -153,8 +153,17 @@ $defs:
             description: Not offered by Redragon's software; see CONFIG.md.
             type: object
             additionalProperties: false
-            required: [key_sequence]
+            minProperties: 1
+            maxProperties: 1
             properties:
+              custom_media_button:
+                description: A media (consumer) key by name, or any 16-bit code such as 0x01a6.
+                anyOf:
+                  - type: integer
+                    minimum: 0
+                    maximum: 65535
+                  - type: string
+                    pattern: "^(0x[0-9a-fA-F]{1,4}|[a-z][a-z-]*)$"
               key_sequence:
                 description: "Keys or combos from one press: everything up to the first release plays on press, the rest on release. 6 presses and releases in total."
                 type: array

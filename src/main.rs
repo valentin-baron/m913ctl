@@ -74,6 +74,9 @@ fn action_value(action: Action) -> Value {
         Action::Key { combo } => map(&[("key", combo.into())]),
         Action::Media { key } => map(&[("media", name(key).into())]),
         Action::Macro { .. } => unreachable!("macros are set by index in set()"),
+        Action::Experimental(cli::Experimental::CustomMediaButton { key }) => {
+            map(&[("experimental", map(&[("custom_media_button", key.into())]))])
+        }
         Action::Experimental(cli::Experimental::KeySequence { keys }) => map(&[(
             "experimental",
             map(&[("key_sequence", keys.into_iter().map(Value::from).collect())]),
@@ -170,6 +173,10 @@ fn get(mouse: &mut Mouse, what: Option<Get>) -> Result<(), String> {
             }
             return Ok(());
         }
+        Some(Get::Profile) => {
+            println!("{}", dump::profile(mouse)?);
+            return Ok(());
+        }
         Some(Get::Macros) => {
             for (i, _) in dump::stored_macros(mouse)? {
                 let (name, steps) = dump::read_macro(mouse, i)?;
@@ -206,7 +213,7 @@ fn get(mouse: &mut Mouse, what: Option<Get>) -> Result<(), String> {
         Get::Dpi { .. } => ("dpi", None),
         Get::Lighting { .. } => ("lighting", None),
         Get::Buttons => ("buttons", None),
-        Get::Macros => unreachable!("handled above"),
+        Get::Macros | Get::Profile => unreachable!("handled above"),
         button => ("buttons", button.button()),
     };
     let lines: Vec<&str> = full.lines().collect();
