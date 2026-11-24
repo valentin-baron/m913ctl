@@ -415,7 +415,8 @@ pub enum Action {
     Media { key: MediaKey },
     /// A macro already stored in the mouse (see `get macros`; macros are written with `apply`)
     Macro {
-        name: String,
+        /// Without one, the macros in the mouse are listed
+        name: Option<String>,
         /// 1-253, while-held, or until-key (until any key is pressed)
         #[arg(long, default_value = "1", value_parser = parse_repeat)]
         repeat: u8,

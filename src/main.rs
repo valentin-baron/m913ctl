@@ -103,7 +103,7 @@ fn set(mouse: &mut Mouse, what: Set) -> Result<(), String> {
         button => {
             let Ok((button, action)) = button.button() else { unreachable!("all other Set variants are matched above") };
             if let Action::Macro { name, repeat } = action {
-                return set_macro(mouse, button, &name, repeat);
+                return set_macro(mouse, button, name.as_deref(), repeat);
             }
             nested(&["buttons", button], action_value(action))
         }
@@ -114,8 +114,24 @@ fn set(mouse: &mut Mouse, what: Set) -> Result<(), String> {
 
 /// Point a button at a macro already in the mouse; the config planner only knows the macros of
 /// its own file.
-fn set_macro(mouse: &mut Mouse, button: &str, name: &str, repeat: u8) -> Result<(), String> {
+fn set_macro(mouse: &mut Mouse, button: &str, name: Option<&str>, repeat: u8) -> Result<(), String> {
     let stored = dump::stored_macros(mouse)?;
+    let Some(name) = name else {
+        // Like clap's own help for a missing argument, but the possible values come from the mouse.
+        let mut cmd = command();
+        cmd.build();
+        let sub = ["set", button, "macro"].iter().fold(&mut cmd, |c, n| c.find_subcommand_mut(n).expect("known path"));
+        print!("{}", sub.render_help());
+        println!("\nMacros in the mouse:");
+        if stored.is_empty() {
+            println!("  none yet; define them under `macros:` in a config and `apply` it");
+        }
+        for (i, n) in &stored {
+            let (_, steps) = dump::read_macro(mouse, *i)?;
+            println!("  {n}: [{}]", steps.join(", "));
+        }
+        std::process::exit(2);
+    };
     let Some((index, _)) = stored.iter().find(|(_, n)| n == name) else {
         let names: Vec<_> = stored.iter().map(|(_, n)| n.as_str()).collect();
         return Err(if names.is_empty() {
