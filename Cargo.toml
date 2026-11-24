@@ -1,6 +1,6 @@
 [package]
 name = "m913ctl"
-version = "0.1.0"
+version = "0.0.1"
 edition = "2021"
 description = "Configure the Redragon M913 (Impact Elite) mouse on Linux: buttons, macros, DPI, lighting, polling rate"
 license = "MIT"
