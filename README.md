@@ -8,18 +8,30 @@ Works on Linux and Windows (and should on macOS, untested), with the wireless re
 (`25a7:fa07`) or the cable (`25a7:fa08`).
 
 ```
-m913ctl dump > m913.yaml     # current settings, in the config format
-$EDITOR m913.yaml
-m913ctl apply m913.yaml      # write them (only the sections present in the file)
+m913ctl get                       # everything, in the config format
+m913ctl get dpi                   # or: polling-rate, lighting, buttons, button <BUTTON>
+m913ctl set fire key f13          # one button
+m913ctl set side_3 media play-pause
+m913ctl set dpi 2 1600            # one DPI level
+m913ctl set lighting --mode steady --color "#ff8000"
+m913ctl apply m913.yaml           # a whole config file
 ```
+
+Every command and value is listed in `--help` at each level (`m913ctl set --help`,
+`m913ctl set fire --help`, `m913ctl set fire key --help`), and a mistyped value prints the valid
+ones. Shell completions: `m913ctl completions fish > ~/.config/fish/completions/m913ctl.fish`
+(also `bash`, `zsh`, `elvish`, `powershell`).
 
 | command | |
 |---|---|
-| `dump` | print the mouse's current settings as YAML |
-| `apply [FILE]` | write FILE to the mouse; default `$XDG_CONFIG_HOME/m913ctl/config.yaml` |
-| `check [FILE]` | validate FILE without touching the mouse |
-| `backup FILE` | save the mouse's settings memory |
-| `restore FILE` | write a backup back |
+| `get [PART]` | current settings, all of them or one part |
+| `set …` | change one setting: `polling-rate`, `dpi`, `dpi-levels`, `active-dpi`, `lighting`, or a button (`side_1` … `side_12`, `left`, `right`, `middle`, `fire`) |
+| `apply [FILE]` | write a config file; default `$XDG_CONFIG_HOME/m913ctl/config.yaml` |
+| `check [FILE]` | validate a config file without touching the mouse |
+| `dump` | same as `get` |
+| `backup FILE` / `restore FILE` | save / write back the mouse's settings memory |
+
+Macros can only be set through a config file.
 
 ## Install
 

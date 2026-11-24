@@ -77,6 +77,17 @@ pub fn dump(mouse: &mut Mouse) -> Result<String, String> {
     Ok(out)
 }
 
+/// The five DPI levels, for changing one of them.
+pub fn dpi_levels(mouse: &mut Mouse) -> Result<Vec<u16>, String> {
+    let mem = mouse.read(ADDR_DPI, 20)?;
+    (0..5)
+        .map(|i| match DPI_CODES.iter().position(|c| *c == mem[4 * i]) {
+            Some(p) => Ok((p as u16 + 1) * 100),
+            None => Err(format!("DPI level {} holds an unknown code 0x{:02x}; set all five with dpi-levels", i + 1, mem[4 * i])),
+        })
+        .collect()
+}
+
 fn decode_sequence(slot: &[u8]) -> String {
     let n = (slot[0] as usize).min((SLOT_SIZE - 2) / 3);
     let downs: Vec<(u8, u16)> = (0..n)

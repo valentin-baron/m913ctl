@@ -56,12 +56,20 @@ pub fn plan(text: &str) -> Result<Vec<Write>, String> {
 
     if let Some(light) = root.get("lighting") {
         let light = light.as_mapping().ok_or("lighting must be a mapping")?;
+        // Each field is written only when given, so changing the color keeps the mode.
         let mode = match light.get("mode") {
-            Some(Value::Bool(false)) | None => "off".to_string(), // YAML 1.1 reads `off` as false
-            Some(v) => v.as_str().ok_or("lighting.mode must be a string")?.to_lowercase(),
+            Some(Value::Bool(false)) => Some("off".to_string()), // YAML 1.1 reads `off` as false
+            Some(v) => Some(v.as_str().ok_or("lighting.mode must be a string")?.to_lowercase()),
+            None => None,
         };
-        let m = LIGHT_MODES.iter().position(|x| *x == mode)
-            .ok_or("lighting.mode must be off, steady, breathing or neon")?;
+        let mode = match mode {
+            Some(mode) => Some((
+                LIGHT_MODES.iter().position(|x| *x == mode)
+                    .ok_or("lighting.mode must be off, steady, breathing or neon")?,
+                mode,
+            )),
+            None => None,
+        };
         if let Some(c) = light.get("color") {
             let c = c.as_str().ok_or("lighting.color must be \"#rrggbb\"")?;
             let rgb = parse_color(c).ok_or(format!("bad color {c:?} (want #rrggbb)"))?;
@@ -75,7 +83,9 @@ pub fn plan(text: &str) -> Result<Vec<Write>, String> {
             let s = s.as_u64().filter(|s| (1..=5).contains(s)).ok_or("lighting.speed must be 1-5")?;
             push(ADDR_SPEED, closed(&[s as u8]), format!("lighting speed {s}"));
         }
-        push(ADDR_LIGHT_MODE, closed(&[m as u8]), format!("lighting {mode}"));
+        if let Some((m, mode)) = mode {
+            push(ADDR_LIGHT_MODE, closed(&[m as u8]), format!("lighting {mode}"));
+        }
     }
 
     let empty = Mapping::new();
