@@ -1,0 +1,18 @@
+[package]
+name = "m913ctl"
+version = "0.1.0"
+edition = "2021"
+description = "Configure the Redragon M913 (Impact Elite) mouse on Linux: buttons, macros, DPI, lighting, polling rate"
+license = "GPL-3.0-or-later"
+readme = "README.md"
+keywords = ["redragon", "m913", "mouse", "hidraw"]
+categories = ["command-line-utilities", "hardware-support"]
+
+[dependencies]
+clap = { version = "4.6.9", features = ["derive"] }
+hidapi = "2.6.7"
+serde_yaml_ng = "0.10"
+
+[profile.release]
+strip = true
+lto = true
