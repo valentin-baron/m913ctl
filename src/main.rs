@@ -15,7 +15,7 @@ mod protocol;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
-use clap::{CommandFactory, Parser};
+use clap::{CommandFactory, FromArgMatches};
 use serde_yaml_ng::{Mapping, Value};
 
 use cli::{name, Action, Cli, Command, DpiPart, Get, LightPart, Set, SetDpi, SetLighting};
@@ -73,6 +73,7 @@ fn action_value(action: Action) -> Value {
         Action::RgbToggle => simple("rgb-toggle"),
         Action::Key { combo } => map(&[("key", combo.into())]),
         Action::Media { key } => map(&[("media", name(key).into())]),
+        Action::Macro { .. } => unreachable!("macros are set by index in set()"),
         Action::RapidFire { speed, times } => {
             map(&[("fire", map(&[("speed", speed.into()), ("times", times.into())]))])
         }
@@ -101,11 +102,38 @@ fn set(mouse: &mut Mouse, what: Set) -> Result<(), String> {
         }
         button => {
             let Ok((button, action)) = button.button() else { unreachable!("all other Set variants are matched above") };
+            if let Action::Macro { name, repeat } = action {
+                return set_macro(mouse, button, &name, repeat);
+            }
             nested(&["buttons", button], action_value(action))
         }
     };
     let text = serde_yaml_ng::to_string(&conf).map_err(|e| e.to_string())?;
     write(mouse, config::plan(&text)?)
+}
+
+/// Point a button at a macro already in the mouse; the config planner only knows the macros of
+/// its own file.
+fn set_macro(mouse: &mut Mouse, button: &str, name: &str, repeat: u8) -> Result<(), String> {
+    let stored = dump::stored_macros(mouse)?;
+    let Some((index, _)) = stored.iter().find(|(_, n)| n == name) else {
+        let names: Vec<_> = stored.iter().map(|(_, n)| n.as_str()).collect();
+        return Err(if names.is_empty() {
+            "the mouse holds no macros; define them under `macros:` in a config and `apply` it".into()
+        } else {
+            format!("no macro {name:?} in the mouse (it has: {})", names.join(", "))
+        });
+    };
+    let rec = protocol::lookup(&protocol::BUTTONS, button).expect("button names come from the CLI");
+    let record = protocol::closed(&[protocol::T_MACRO, *index as u8, repeat]);
+    mouse.write(protocol::ADDR_RECORDS + 4 * rec as u16, &record)?;
+    let repeat = match repeat {
+        protocol::REPEAT_WHILE_HELD => "while-held".to_string(),
+        protocol::REPEAT_UNTIL_KEY => "until-key".to_string(),
+        n => n.to_string(),
+    };
+    println!("{button}: macro {name}, repeat {repeat}");
+    Ok(())
 }
 
 fn get(mouse: &mut Mouse, what: Option<Get>) -> Result<(), String> {
@@ -119,6 +147,13 @@ fn get(mouse: &mut Mouse, what: Option<Get>) -> Result<(), String> {
                 DpiPart::Levels => println!("[{}]", list()),
                 DpiPart::Active => println!("{}", mouse.read(protocol::ADDR_DPI_ACTIVE, 1)?[0]),
                 level => println!("{}", levels[name(level).parse::<usize>().unwrap() - 1]),
+            }
+            return Ok(());
+        }
+        Some(Get::Macros) => {
+            for (i, _) in dump::stored_macros(mouse)? {
+                let (name, steps) = dump::read_macro(mouse, i)?;
+                println!("{name}: [{}]", steps.join(", "));
             }
             return Ok(());
         }
@@ -151,6 +186,7 @@ fn get(mouse: &mut Mouse, what: Option<Get>) -> Result<(), String> {
         Get::Dpi { .. } => ("dpi", None),
         Get::Lighting { .. } => ("lighting", None),
         Get::Buttons => ("buttons", None),
+        Get::Macros => unreachable!("handled above"),
         button => ("buttons", button.button()),
     };
     let lines: Vec<&str> = full.lines().collect();
@@ -197,14 +233,26 @@ fn run(cli: Cli) -> Result<(), String> {
             }
         }
         Command::Completions { shell } => {
-            clap_complete::generate(shell, &mut Cli::command(), "m913ctl", &mut std::io::stdout());
+            clap_complete::generate(shell, &mut command(), "m913ctl", &mut std::io::stdout());
         }
     }
     Ok(())
 }
 
+/// The CLI, with every command that needs an argument printing its full help (possible values,
+/// key names) when called without one, instead of a bare "required argument missing".
+fn command() -> clap::Command {
+    fn help_when_empty(c: clap::Command) -> clap::Command {
+        let needs = c.is_subcommand_required_set()
+            || c.get_arguments().any(|a| a.is_required_set() && a.is_positional());
+        c.arg_required_else_help(needs).mut_subcommands(help_when_empty)
+    }
+    help_when_empty(Cli::command())
+}
+
 fn main() -> ExitCode {
-    match run(Cli::parse()) {
+    let cli = Cli::from_arg_matches(&command().get_matches()).unwrap_or_else(|e| e.exit());
+    match run(cli) {
         Ok(()) => ExitCode::SUCCESS,
         Err(e) => {
             eprintln!("m913ctl: {e}");

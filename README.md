@@ -12,17 +12,20 @@ m913ctl get                         # everything, in the config format
 m913ctl get dpi                     # one section: polling-rate, dpi, lighting, buttons
 m913ctl get dpi levels              # one value: dpi levels|active|1-5, lighting mode|color|brightness|speed
 m913ctl get fire                    # one button: 1-12, left, right, middle, fire
+m913ctl get macros                  # the macros stored in the mouse
 
 m913ctl set fire key f13
 m913ctl set 3 media play-pause
 m913ctl set dpi 2 1600              # or: set dpi levels 800 1600 3200 6400 12000, set dpi active 2
 m913ctl set lighting color "#ff8000"
 m913ctl set polling-rate 1000
+m913ctl set 5 macro hello --repeat 3  # a macro already in the mouse
 
 m913ctl apply m913.yaml             # a whole config file
 ```
 
-Every command and value is listed in `--help` at each level (`m913ctl set --help`,
+A command run without its required arguments prints its help, so `m913ctl set fire media` lists
+the media keys. Every command and value is listed in `--help` at each level (`m913ctl set --help`,
 `m913ctl set fire --help`, `m913ctl set fire key --help`), and a mistyped value prints the valid
 ones. Shell completions: `m913ctl completions fish > ~/.config/fish/completions/m913ctl.fish`
 (also `bash`, `zsh`, `elvish`, `powershell`).
@@ -36,7 +39,8 @@ ones. Shell completions: `m913ctl completions fish > ~/.config/fish/completions/
 | `dump` | same as `get` |
 | `backup FILE` / `restore FILE` | save / write back the mouse's settings memory |
 
-Macros can only be set through a config file.
+New macros are defined in a config file (`macros:`) and written with `apply`; after that, `set`
+can point any button at them by name.
 
 ## Install
 

@@ -77,6 +77,24 @@ pub fn dump(mouse: &mut Mouse) -> Result<String, String> {
     Ok(out)
 }
 
+/// Macro slots that hold a plausible macro: (index, name). Slots apply never wrote hold 0xff.
+pub fn stored_macros(mouse: &mut Mouse) -> Result<Vec<(usize, String)>, String> {
+    let mut out = Vec::new();
+    for i in 0..MACRO_COUNT {
+        let head = mouse.read(ADDR_MACROS + (MACRO_SIZE * i) as u16, MACRO_NAME + 2)?;
+        let len = head[0] as usize;
+        let count = u16::from_be_bytes([head[MACRO_NAME], head[MACRO_NAME + 1]]) as usize;
+        if len == 0 || len % 2 == 1 || len > MACRO_NAME - 1 || count == 0 || count > (MACRO_SIZE - MACRO_NAME - 3) / 5 {
+            continue;
+        }
+        let units: Vec<u16> = head[1..1 + len].chunks(2).map(|c| u16::from_le_bytes([c[0], c[1]])).collect();
+        if let Ok(name) = String::from_utf16(&units) {
+            out.push((i, name));
+        }
+    }
+    Ok(out)
+}
+
 /// The five DPI levels, for changing one of them.
 pub fn dpi_levels(mouse: &mut Mouse) -> Result<Vec<u16>, String> {
     let mem = mouse.read(ADDR_DPI, 20)?;
@@ -111,7 +129,7 @@ fn decode_sequence(slot: &[u8]) -> String {
     format!("{{key: {}}}", quote(&parts.join("+")))
 }
 
-fn read_macro(mouse: &mut Mouse, index: usize) -> Result<(String, Vec<String>), String> {
+pub fn read_macro(mouse: &mut Mouse, index: usize) -> Result<(String, Vec<String>), String> {
     let addr = ADDR_MACROS + (MACRO_SIZE * index) as u16;
     let head = mouse.read(addr, MACRO_NAME + 2)?;
     let len = (head[0] as usize).min(MACRO_NAME - 1) & !1;

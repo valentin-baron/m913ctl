@@ -64,6 +64,8 @@ pub enum Get {
     Lighting { part: Option<LightPart> },
     /// Every button's action
     Buttons,
+    /// The macros stored in the mouse, which buttons can be set to (`set <BUTTON> macro <NAME>`)
+    Macros,
     /// Thumb grid button 1
     #[command(name = "1")]
     Side1,
@@ -411,6 +413,13 @@ pub enum Action {
     Key { combo: String },
     /// A media key
     Media { key: MediaKey },
+    /// A macro already stored in the mouse (see `get macros`; macros are written with `apply`)
+    Macro {
+        name: String,
+        /// 1-253, while-held, or until-key (until any key is pressed)
+        #[arg(long, default_value = "1", value_parser = parse_repeat)]
+        repeat: u8,
+    },
     /// Repeated left clicks
     RapidFire {
         /// Raw stored value, lower is faster
@@ -444,6 +453,15 @@ pub enum MediaKey {
 /// The config-file name of a value, which is also its command-line name.
 pub fn name<T: ValueEnum>(v: T) -> String {
     v.to_possible_value().unwrap().get_name().to_string()
+}
+
+fn parse_repeat(s: &str) -> Result<u8, String> {
+    match s {
+        "while-held" => Ok(crate::protocol::REPEAT_WHILE_HELD),
+        "until-key" => Ok(crate::protocol::REPEAT_UNTIL_KEY),
+        _ => s.parse::<u8>().ok().filter(|n| (1..=253).contains(n))
+            .ok_or_else(|| "must be 1-253, while-held or until-key".to_string()),
+    }
 }
 
 fn parse_dpi(s: &str) -> Result<u16, String> {
