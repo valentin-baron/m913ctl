@@ -240,6 +240,20 @@ polls apart (23 ms at 125 Hz).
 Up to 6 presses and releases in total: 3 plain keys, or e.g. `ctrl+c` plus one key. Use a
 [macro](#macros) for anything longer or with exact timing.
 
+**It is not a short macro.** It runs through the same mechanism as a plain [`key`](#key), where
+"held while the button is held" is what you want (`ctrl` stays down as long as you hold the
+button), and the firmware applies that rule to the whole list:
+
+| | `key_sequence` | [macro](#macro) |
+|---|---|---|
+| plays | up to the first release on press, the rest on release | from the press, all the way through |
+| holding the button | the first key stays down (key repeat: `hhhh`) | once, or repeats with `repeat: while-held` |
+| timing | fixed by the firmware, 3 polls apart (23 ms at 125 Hz) | your `wait` steps, else 3 ms |
+| length | 6 presses and releases | 70 |
+| mouse clicks, repeat modes | no | yes |
+
+The `key_sequence` timings were measured on the mouse.
+
 ## Key names
 
 | | |
