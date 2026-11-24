@@ -1,0 +1,25 @@
+polling_rate: 500
+dpi:
+  levels: [400, 800, 1600, 3200, 6400]
+  active: 3
+lighting: {mode: steady, color: "#ff8000", brightness: 128}
+macros:
+  hello: [down shift, down h, up h, up shift, down e, up e, down l, up l, down l, up l, down o, up o, down space, up space]
+  clicker: [down left, wait 40, up left, wait 300]
+buttons:
+  side_1: {key: a}
+  side_2: {key: shift+b}
+  side_3: back
+  side_4: forward
+  side_5: {media: volume-up}
+  side_6: {media: mute}
+  side_7: {macro: hello, repeat: 1}
+  side_8: {macro: hello, repeat: 3}
+  side_9: {macro: hello, repeat: until-key}
+  side_10: {macro: clicker, repeat: while-held}
+  side_11: dpi-loop
+  side_12: rgb-toggle
+  left: left
+  right: right
+  middle: middle
+  fire: {key: f13}
